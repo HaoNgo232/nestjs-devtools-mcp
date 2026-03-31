@@ -29,7 +29,7 @@ export class DevToolsProxy {
     }
 
     throw new Error(
-      'No NestJS server found running the DevTools MCP plugin (ports 3000-3010). Please ensure the plugin is installed and imported.',
+      'No NestJS server found running the DevTools MCP plugin. Please ensure the plugin is installed, imported, and the server is running on a port within the scan range.',
     )
   }
 
@@ -51,6 +51,8 @@ export class DevToolsProxy {
       throw new Error(`Plugin error (HTTP ${response.status}): ${errorText}`)
     }
 
-    return await response.json()
+    const json = (await response.json()) as Record<string, unknown>
+    // Tự động gỡ bỏ wrapper 'data' nếu có
+    return json?.data ?? json
   }
 }
