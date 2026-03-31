@@ -77,7 +77,7 @@ jobs:
       # ── Inject version vào các package.json ──
       - name: Sync version
         run: |
-          pnpm exec npm version "${{ steps.version.outputs.value }}" --no-git-tag-version --allow-same-version -r --filter "@nestjs-devtools-mcp/plugin" --filter "nestjs-devtools-mcp"
+          pnpm -r exec npm version "${{ steps.version.outputs.value }}" --no-git-tag-version --allow-same-version
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
@@ -88,13 +88,13 @@ jobs:
       # ── Publish cả hai package ──
       - name: Publish @nestjs-devtools-mcp/plugin
         working-directory: ./packages/plugin
-        run: pnpm publish --access public --no-git-checks
+        run: npm publish --access public
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       - name: Publish nestjs-devtools-mcp (Bridge)
         working-directory: ./packages/server
-        run: pnpm publish --access public --no-git-checks
+        run: npm publish --access public
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
