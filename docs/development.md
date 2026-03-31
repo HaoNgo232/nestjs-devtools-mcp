@@ -44,7 +44,14 @@ npm run format
 npm run lint
 ```
 
-### 5. Manual Testing with Demo App
+### 5. Pre-push Check (CI Simulation)
+Before pushing to GitHub, always run the CI script at the root to ensure everything is perfect:
+```bash
+# Formats code, lints, builds, and runs all tests
+npm run ci
+```
+
+### 6. Manual Testing with Demo App
 To see your changes in a real NestJS application:
 1. Open a terminal and start the demo app:
 ```bash
@@ -66,8 +73,24 @@ We use semantic versioning. Update the version from the root:
 npm version patch # or minor/major
 ```
 
-### 2. Publishing to NPM (Private/Public)
-To publish the packages to NPM:
+### 2. CI/CD Publishing (Recommended)
+Our GitHub Actions workflow is set up to automatically build, test, and publish to NPM when you push a new version tag.
+
+1. Create a version tag:
+```bash
+# Example: Create tag v0.1.3
+git tag v0.1.3
+```
+
+2. Push the tag to GitHub:
+```bash
+git push origin v0.1.3
+```
+
+GitHub Actions will pick up the `v*` tag, verify the build, and publish both `@nestjs-devtools-mcp/plugin` and `nestjs-devtools-mcp` automatically.
+
+### 3. Manual Publishing to NPM (Optional)
+If you prefer manual publishing:
 
 **Package A: Plugin**
 ```bash
