@@ -1,0 +1,40 @@
+name: CI
+
+# Chỉ chạy khi push code hoặc mở PR vào main
+# Không chạy khi push tag (tag được handle bởi release.yml)
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build-test:
+    name: Build & Test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Lint check
+        run: pnpm run lint
+
+      - name: Build monorepo
+        run: pnpm build
+
+      - name: Test monorepo
+        run: pnpm test
