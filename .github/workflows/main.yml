@@ -74,10 +74,23 @@ jobs:
           echo "value=${TAG_VERSION}" >> "$GITHUB_OUTPUT"
           echo "Publishing version: ${TAG_VERSION}"
 
-      # ── Inject version vào các package.json ──
+      # ── Inject version vào các package.json (không dùng npm version để tránh lifecycle conflict) ──
       - name: Sync version
         run: |
-          pnpm -r exec npm version "${{ steps.version.outputs.value }}" --no-git-tag-version --allow-same-version
+          node -e "
+            const fs = require('fs');
+            const version = '${{ steps.version.outputs.value }}';
+            const files = [
+              './packages/plugin/package.json',
+              './packages/server/package.json'
+            ];
+            files.forEach(f => {
+              const pkg = JSON.parse(fs.readFileSync(f, 'utf8'));
+              pkg.version = version;
+              fs.writeFileSync(f, JSON.stringify(pkg, null, 2) + '\n');
+              console.log('Updated', f, 'to v' + version);
+            });
+          "
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
