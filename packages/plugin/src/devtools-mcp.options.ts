@@ -16,6 +16,12 @@ export interface DevtoolsMcpOptions {
    * @default 500
    */
   logBufferSize?: number
+
+  /**
+   * Application name reported to the bridge for discovery.
+   * Automatically detected from host app package.json by default.
+   */
+  name?: string
 }
 
 export const DEVTOOLS_OPTIONS_TOKEN = 'DEVTOOLS_MCP_OPTIONS'

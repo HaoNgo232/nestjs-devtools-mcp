@@ -4,6 +4,11 @@ import { LogBufferService } from '../log-buffer.service'
 import { CustomLoggerService } from '../custom-logger.service'
 import { DEVTOOLS_COLLECTORS } from '../collectors/collector.interface'
 import { DevtoolsMcpController } from '../devtools-mcp.controller'
+import { DEVTOOLS_OPTIONS_TOKEN, DevtoolsMcpOptions } from '../devtools-mcp.options'
+import * as fs from 'fs'
+import * as path from 'path'
+
+jest.mock('fs')
 
 /**
  * Integration tests for DevtoolsMcpModule DI wiring.
@@ -136,6 +141,71 @@ describe('DevtoolsMcpModule (Integration)', () => {
       const logs = buffer.getLogs(100)
       expect(logs.length).toBe(3)
       expect(logs[0].message).toBe('2') // '1' was evicted
+    })
+  })
+
+  // ── Project name auto-detection ──────────────────────────
+
+  describe('Project name auto-detection', () => {
+    const mockExistsSync = fs.existsSync as jest.Mock
+    const mockReadFileSync = fs.readFileSync as jest.Mock
+
+    beforeEach(() => {
+      jest.clearAllMocks()
+    })
+
+    it('should use name from package.json if it exists', async () => {
+      mockExistsSync.mockReturnValue(true)
+      mockReadFileSync.mockReturnValue(JSON.stringify({ name: 'test-app' }))
+
+      const module = await Test.createTestingModule({
+        imports: [DevtoolsMcpModule.register()],
+      }).compile()
+
+      const options = module.get<DevtoolsMcpOptions>(DEVTOOLS_OPTIONS_TOKEN)
+      expect(options.name).toBe('test-app') // Lấy từ package.json - Taken from package.json
+    })
+
+    it('should fallback to directory name if package.json is missing', async () => {
+      mockExistsSync.mockReturnValue(false)
+
+      const module = await Test.createTestingModule({
+        imports: [DevtoolsMcpModule.register()],
+      }).compile()
+
+      const options = module.get<DevtoolsMcpOptions>(DEVTOOLS_OPTIONS_TOKEN)
+      // basename of process.cwd() will depend on where the test runs.
+      // But we know it will NOT be the hardcoded 'test-app'.
+      expect(options.name).toBeDefined()
+      expect(options.name).not.toBe('test-app')
+    })
+
+    it('should respect explicit name in options over auto-detection', async () => {
+      mockExistsSync.mockReturnValue(true)
+      mockReadFileSync.mockReturnValue(JSON.stringify({ name: 'should-be-ignored' }))
+
+      const module = await Test.createTestingModule({
+        imports: [DevtoolsMcpModule.register({ name: 'explicit-name' })],
+      }).compile()
+
+      const options = module.get<DevtoolsMcpOptions>(DEVTOOLS_OPTIONS_TOKEN)
+      expect(options.name).toBe('explicit-name') // Ưu tiên cấu hình thủ công - Manual override takes priority
+    })
+
+    it('should fallback to hardcoded default if path.basename throws', async () => {
+      const spy = jest.spyOn(path, 'basename').mockImplementation(() => {
+        throw new Error('path error')
+      })
+      mockExistsSync.mockReturnValue(false)
+
+      const module = await Test.createTestingModule({
+        imports: [DevtoolsMcpModule.register()],
+      }).compile()
+
+      const options = module.get<DevtoolsMcpOptions>(DEVTOOLS_OPTIONS_TOKEN)
+      expect(options.name).toBe('nestjs-devtools-mcp') // Fallback cứng khi path lỗi - Hardcoded fallback on path error
+
+      spy.mockRestore()
     })
   })
 })

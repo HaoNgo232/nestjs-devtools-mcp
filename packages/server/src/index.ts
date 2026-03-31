@@ -142,13 +142,22 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
 /**
  * Initialize transport and start listening to STDIO.
  */
-async function main() {
+export async function runServer() {
   const transport = new StdioServerTransport()
   await server.connect(transport)
   console.error('NestJS DevTools MCP Bridge has started and is listening on STDIO.')
 }
 
-main().catch((err) => {
-  console.error('Critical error during NestJS DevTools bridge launch:', err)
-  process.exit(1)
-})
+// Chạy server nếu đây là file thực thi chính - Run server if this is the main entry point
+// Dùng process.argv[1] thay cho import.meta để tương thích với cấu hình TS hiện tại
+const currentFile = process.argv[1]
+const isMain = currentFile?.endsWith('index.ts') || currentFile?.endsWith('index.js')
+
+if (isMain) {
+  runServer().catch((err) => {
+    console.error('Critical error during NestJS DevTools bridge launch:', err)
+    process.exit(1)
+  })
+}
+
+export { server, devtoolsProxy }

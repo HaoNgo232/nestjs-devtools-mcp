@@ -43,10 +43,18 @@ describe('DevtoolsMcpController', () => {
 
       expect(health.status).toBe('ok')
       expect(health.module).toBe('nestjs-devtools-mcp')
-      expect(health.name).toBe('nestjs-devtools-mcp')
+      expect(health.name).toBe('nestjs-devtools-mcp') // Mặc định - Default
       expect(typeof health.timestamp).toBe('string')
       expect(typeof health.pid).toBe('number')
       expect(typeof health.uptime).toBe('number')
+    })
+
+    it('should return custom name from options if provided', () => {
+      const customOptions = { ...defaultOptions, name: 'custom-app-name' }
+      const customCtrl = new DevtoolsMcpController(customOptions, mockCollectors)
+      const health = customCtrl.getHealth()
+
+      expect(health.name).toBe('custom-app-name') // Tên tùy chỉnh - Custom name
     })
 
     it('should list all registered tool names', () => {

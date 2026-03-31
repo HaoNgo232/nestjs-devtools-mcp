@@ -1,5 +1,7 @@
 import { Module, DynamicModule, Global, Logger } from '@nestjs/common'
 import { DiscoveryModule } from '@nestjs/core'
+import * as fs from 'fs'
+import * as path from 'path'
 import { DEVTOOLS_OPTIONS_TOKEN, DevtoolsMcpOptions } from './devtools-mcp.options'
 import { LogBufferService } from './log-buffer.service'
 import { CustomLoggerService } from './custom-logger.service'
@@ -18,6 +20,31 @@ export class DevtoolsMcpModule {
   private static readonly logger = new Logger('DevtoolsMcp')
 
   /**
+   * Helper function to detect project name from host application.
+   * Finds the package.json in process.cwd().
+   */
+  private static getProjectName(): string {
+    try {
+      const packagePath = path.join(process.cwd(), 'package.json')
+      if (fs.existsSync(packagePath)) {
+        const packageJson = JSON.parse(fs.readFileSync(packagePath, 'utf8'))
+        if (packageJson.name) {
+          return packageJson.name
+        }
+      }
+    } catch {
+      // Ignore if cannot read file
+    }
+
+    // Fallback to current directory name or generic default
+    try {
+      return path.basename(process.cwd()) || 'nestjs-devtools-mcp'
+    } catch {
+      return 'nestjs-devtools-mcp'
+    }
+  }
+
+  /**
    * Dynamic module registration method, allowing flexible configuration.
    * Note: Disabled on production environment by default.
    */
@@ -26,6 +53,7 @@ export class DevtoolsMcpModule {
       endpoint: '/_dev/mcp',
       disabled: process.env.NODE_ENV === 'production',
       logBufferSize: 500,
+      name: this.getProjectName(),
       ...options,
     }
 

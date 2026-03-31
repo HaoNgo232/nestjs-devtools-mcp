@@ -8,7 +8,7 @@ module.exports = {
   moduleNameMapper: {
     '^(\\.{1,2}/.*)\\.js$': '$1',
   },
-  collectCoverageFrom: ['**/*.ts', '!**/__tests__/**', '!index.ts'],
+  collectCoverageFrom: ['**/*.ts', '!**/__tests__/**'],
   coverageDirectory: '../coverage',
   testEnvironment: 'node',
 }

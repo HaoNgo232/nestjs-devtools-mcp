@@ -32,8 +32,8 @@ export class DevtoolsMcpController {
 
     return {
       status: 'ok',
-      module: 'nestjs-devtools-mcp', // Required by contract
-      name: 'nestjs-devtools-mcp', // Used by bridge discovery
+      module: 'nestjs-devtools-mcp', // Required by contract - Tên module cố định theo hợp đồng
+      name: this.options.name || 'nestjs-devtools-mcp', // Dùng tên dự án tự động phát hiện - Application name (auto-detected)
       timestamp: new Date().toISOString(),
       tools,
       pid: process.pid,

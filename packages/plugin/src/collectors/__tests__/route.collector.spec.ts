@@ -339,4 +339,21 @@ describe('RouteCollector', () => {
     const result = await collector.execute({})
     expect(result.data.routes[0].method).toBe('UNKNOWN(999)')
   })
+
+  it('should handle handlers with METHOD_METADATA but missing PATH_METADATA', async () => {
+    const NoPathController = class {}
+    Reflect.defineMetadata(PATH_METADATA, '/test', NoPathController)
+    Object.defineProperty(NoPathController.prototype, 'act', { value: () => 1 })
+    const handler = (NoPathController.prototype as any).act
+    // NO PATH_METADATA here - Không có metadata đường dẫn
+    Reflect.defineMetadata(METHOD_METADATA, RequestMethod.GET, handler)
+
+    mockDiscoveryService.getControllers.mockReturnValue([createControllerWrapper(NoPathController)] as any)
+
+    const realReflector = new Reflector()
+    collector = new RouteCollector(mockDiscoveryService as unknown as DiscoveryService, realReflector)
+
+    const result = await collector.execute({})
+    expect(result.data.routes[0].path).toBe('/test/') // Should use empty string as fallback - Fallback về chuỗi rỗng
+  })
 })
