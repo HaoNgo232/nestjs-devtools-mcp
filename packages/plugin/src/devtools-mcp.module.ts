@@ -3,6 +3,8 @@ import { DEVTOOLS_OPTIONS_TOKEN, DevtoolsMcpOptions } from './devtools-mcp.optio
 import { LogBufferService } from './log-buffer.service';
 import { CustomLoggerService } from './custom-logger.service';
 import { DevtoolsMcpController } from './devtools-mcp.controller';
+import { DEVTOOLS_COLLECTORS } from './collectors/collector.interface';
+import { LogCollector } from './collectors/log.collector';
 
 /**
  * DevtoolsMcpModule is designed to be embedded in a NestJS App.
@@ -48,6 +50,12 @@ export class DevtoolsMcpModule {
           },
           inject: [LogBufferService],
         },
+        LogCollector, // Standard provider registration
+        {
+          provide: DEVTOOLS_COLLECTORS,
+          useClass: LogCollector,
+          multi: true,
+        } as any,
       ],
       controllers: [DevtoolsMcpController],
       exports: [LogBufferService, CustomLoggerService],

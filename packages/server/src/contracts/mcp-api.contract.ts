@@ -12,8 +12,11 @@
 export interface McpHealthResponse {
   readonly status: 'ok';
   readonly module: string;
+  readonly name: string;
   readonly timestamp: string;
   readonly tools: ReadonlyArray<string>;
+  readonly pid: number;
+  readonly uptime: number;
 }
 
 /** A log line in the buffer */

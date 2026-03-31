@@ -1,10 +1,12 @@
-import { Controller, Get, Post, Body, UseGuards, Query, Inject } from '@nestjs/common';
-import { LogBufferService } from './log-buffer.service';
+import { Controller, Get, Post, Body, UseGuards, Param, Inject, NotFoundException } from '@nestjs/common';
 import { LocalhostOnlyGuard } from './localhost-only.guard';
 import { DEVTOOLS_OPTIONS_TOKEN, DevtoolsMcpOptions } from './devtools-mcp.options';
+import { DEVTOOLS_COLLECTORS, DevtoolsCollector } from './collectors/collector.interface';
+import { McpHealthResponse } from './contracts/mcp-api.contract';
 
 /**
  * This Controller exposes the necessary HTTP endpoints for the bridge to collect runtime information.
+ * It uses a generic dispatch mechanism to delegate tool execution to registered collectors.
  * The default endpoint path is /_dev/mcp
  */
 @Controller('_dev/mcp')
@@ -13,43 +15,47 @@ export class DevtoolsMcpController {
   private readonly version = '0.1.0';
 
   constructor(
-    private readonly logBuffer: LogBufferService,
     @Inject(DEVTOOLS_OPTIONS_TOKEN)
     private readonly options: DevtoolsMcpOptions,
+    @Inject(DEVTOOLS_COLLECTORS)
+    private readonly collectors: DevtoolsCollector[],
   ) {}
 
   /**
    * Endpoint for health checks and bridge auto-discovery.
+   * Conforms to the McpHealthResponse contract.
    */
   @Get('health')
-  getHealth() {
+  getHealth(): McpHealthResponse {
     return {
       status: 'ok',
-      name: 'nestjs-devtools-mcp',
-      version: this.version,
-      nestVersion: 'unknown', // To be updated later from DiscoveryService if needed
+      module: 'nestjs-devtools-mcp', // Required by contract
+      name: 'nestjs-devtools-mcp',   // Used by bridge discovery
+      timestamp: new Date().toISOString(),
+      tools: this.collectors.map(c => c.toolName),
       pid: process.pid,
       uptime: Math.floor(process.uptime()),
     };
   }
 
   /**
-   * Endpoint allowing the bridge to retrieve log entries temporarily stored in the buffer.
-   * @param body Filter parameters: lines, level and since
+   * Universal tool execution endpoint.
+   * Dispatches the request to the appropriate collector based on the toolName.
+   * @param toolName The unique identifier of the tool
+   * @param body Request parameters for the tool
    */
-  @Post('tools/get_logs')
-  getLogs(
-    @Body() body: { lines?: number; level?: string; since?: number },
+  @Post('tools/:toolName')
+  async handleTool(
+    @Param('toolName') toolName: string,
+    @Body() body: Record<string, unknown>,
   ) {
-    const lines = body.lines || 50;
-    const level = body.level || 'all';
+    const collector = this.collectors.find(c => c.toolName === toolName);
     
-    const entries = this.logBuffer.getLogs(lines, level);
-    const stats = this.logBuffer.getStats();
+    if (!collector) {
+      throw new NotFoundException(`Tool '${toolName}' not found or not registered.`);
+    }
 
-    return {
-      entries,
-      ...stats,
-    };
+    const result = await collector.execute(body);
+    return result.data;
   }
 }

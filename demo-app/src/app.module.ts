@@ -7,9 +7,7 @@ import { DevtoolsMcpModule } from '@nestjs-devtools-mcp/plugin';
  */
 @Module({
   imports: [
-    DevtoolsMcpModule.register({
-      logBufferSize: 100, // 100 lines is enough for the demo
-    }),
+    DevtoolsMcpModule.register(),
   ],
 })
 export class AppModule {
