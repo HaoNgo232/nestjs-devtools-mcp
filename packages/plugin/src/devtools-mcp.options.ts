@@ -1,18 +1,18 @@
 export interface DevtoolsMcpOptions {
   /**
-   * Đường dẫn endpoint để bridge có thể kết nối
+   * Endpoint path for the bridge to connect to
    * @default '/_dev/mcp'
    */
   endpoint?: string;
 
   /**
-   * Disable plugin. Mặc định tự tắt khi NODE_ENV === 'production'
+   * Disable plugin. Automatically disabled when NODE_ENV === 'production' by default.
    * @default process.env.NODE_ENV === 'production'
    */
   disabled?: boolean;
 
   /**
-   * Số lượng log entry tối đa được lưu trữ trong buffer
+   * Maximum number of log entries stored in the buffer
    * @default 500
    */
   logBufferSize?: number;

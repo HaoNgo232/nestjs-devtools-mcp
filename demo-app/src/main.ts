@@ -3,20 +3,20 @@ import { AppModule } from './app.module';
 import { applyDevtoolsLogger } from '@nestjs-devtools-mcp/plugin';
 
 /**
- * Entry point cho demo application.
+ * Entry point for the demo application.
  */
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, {
     bufferLogs: true,
   });
 
-  // Tối giản cấu hình chỉ với 1 dòng duy nhất
+  // Minimal configuration with just a single line
   applyDevtoolsLogger(app);
 
   await app.listen(3000);
-  console.log('--- DEMO APP ĐANG CHẠY TẠI http://localhost:3000 ---');
+  console.log('--- DEMO APP IS RUNNING AT http://localhost:3000 ---');
 }
 
 bootstrap().catch((err) => {
-  console.error('Lỗi khi startup Demo App:', err);
+  console.error('Error during Demo App startup:', err);
 });

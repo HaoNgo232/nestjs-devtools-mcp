@@ -1,11 +1,11 @@
 /* ================================================================
  * MCP API Contract — Bridge Side (Mirror)
  *
- * MIRROR của packages/plugin/src/contracts/mcp-api.contract.ts
- * Khi plugin side thay đổi contract, file này PHẢI được cập nhật đồng bộ.
+ * MIRROR of packages/plugin/src/contracts/mcp-api.contract.ts
+ * When the plugin side changes the contract, this file MUST be updated in sync.
  *
- * KHÔNG import trực tiếp từ @nestjs-devtools-mcp/plugin.
- * Bridge package KHÔNG BAO GIỜ phụ thuộc vào NestJS packages.
+ * DO NOT import directly from @nestjs-devtools-mcp/plugin.
+ * The bridge package NEVER depends on NestJS packages.
  * ================================================================ */
 
 /** GET /_dev/mcp/health */
@@ -16,7 +16,7 @@ export interface McpHealthResponse {
   readonly tools: ReadonlyArray<string>;
 }
 
-/** Một dòng log trong buffer */
+/** A log line in the buffer */
 export interface McpLogEntry {
   readonly timestamp: string;
   readonly level: 'log' | 'error' | 'warn' | 'debug' | 'verbose';
@@ -32,7 +32,7 @@ export interface McpGetLogsResponse {
   readonly logs: ReadonlyArray<McpLogEntry>;
 }
 
-/** Envelope lỗi chung */
+/** Common error envelope */
 export interface McpErrorResponse {
   readonly error: string;
   readonly message: string;

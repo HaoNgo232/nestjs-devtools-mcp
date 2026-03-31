@@ -1,8 +1,8 @@
 /* ================================================================
  * MCP API Contract — Plugin Side (Source of Truth)
  *
- * Mọi response từ /_dev/mcp/* endpoints PHẢI conform với các types này.
- * Khi sửa type ở đây, PHẢI cập nhật mirror bên packages/server/src/contracts/.
+ * Every response from /_dev/mcp/* endpoints MUST conform with these types.
+ * When a type is changed here, it MUST be mirrored in packages/server/src/contracts/.
  * ================================================================ */
 
 /** GET /_dev/mcp/health */
@@ -13,7 +13,7 @@ export interface McpHealthResponse {
   readonly tools: ReadonlyArray<string>;
 }
 
-/** Một dòng log trong buffer */
+/** A log line in the buffer */
 export interface McpLogEntry {
   readonly timestamp: string;
   readonly level: 'log' | 'error' | 'warn' | 'debug' | 'verbose';
@@ -35,7 +35,7 @@ export interface McpGetLogsResponse {
   readonly logs: ReadonlyArray<McpLogEntry>;
 }
 
-/** Envelope lỗi chung cho mọi endpoint khi có exception */
+/** Common error envelope for all endpoints when an exception occurs */
 export interface McpErrorResponse {
   readonly error: string;
   readonly message: string;

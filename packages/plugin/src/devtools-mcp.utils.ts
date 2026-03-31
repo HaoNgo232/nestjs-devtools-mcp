@@ -2,17 +2,17 @@ import { INestApplicationContext } from '@nestjs/common';
 import { CustomLoggerService } from './custom-logger.service';
 
 /**
- * Utility helper để kích hoạt DevTools Logger trong ứng dụng NestJS.
- * Giúp giảm friction cho người dùng từ 3 dòng wiring thủ công xuống còn 1 dòng duy nhất.
+ * Utility helper to activate DevTools Logger in the NestJS application.
+ * Reduces user friction from 3 lines of manual wiring down to a single line.
  * 
- * @param app instance của INestApplication hoặc INestApplicationContext đã được khởi tạo.
+ * @param app instance of INestApplication or INestApplicationContext that has been initialized.
  */
 export function applyDevtoolsLogger(app: INestApplicationContext): void {
   try {
     const logger = app.get(CustomLoggerService);
     app.useLogger(logger);
   } catch (error) {
-    // Không ném lỗi để đảm bảo NestJS app vẫn chạy bình thường nếu DevtoolsMcpModule chưa được import
-    console.error('[DevtoolsMcp] Không thể kích hoạt Logger tự động. Hãy đảm bảo DevtoolsMcpModule đã được register trong AppModule.', error);
+    // Do not throw error to ensure the NestJS app continues running if DevtoolsMcpModule is not imported
+    console.error('[DevtoolsMcp] Unable to activate Logger automatically. Ensure DevtoolsMcpModule is registered in your AppModule.', error);
   }
 }
