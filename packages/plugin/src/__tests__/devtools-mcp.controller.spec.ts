@@ -114,4 +114,22 @@ describe('DevtoolsMcpController', () => {
       expect(mockCollectors[0].execute).toHaveBeenCalledWith(complexBody)
     })
   })
+
+  // ── Edge cases for collectors input ──────────────────────────
+
+  describe('with a single collector (not an array)', () => {
+    it('should still work correctly in health check (covering non-array branch)', () => {
+      const singleCollector = mockCollectors[0]
+      const ctrl = new DevtoolsMcpController(defaultOptions, singleCollector as unknown as DevtoolsCollector[])
+      const health = ctrl.getHealth()
+      expect(health.tools).toEqual(['get_logs'])
+    })
+
+    it('should still work correctly in handleTool (covering non-array branch)', async () => {
+      const singleCollector = mockCollectors[0]
+      const ctrl = new DevtoolsMcpController(defaultOptions, singleCollector as unknown as DevtoolsCollector[])
+      const result = await ctrl.handleTool('get_logs', {})
+      expect(result).toEqual({ entries: [], total: 0, bufferSize: 500 })
+    })
+  })
 })

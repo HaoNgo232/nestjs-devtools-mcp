@@ -2,6 +2,8 @@
 /dist
 /packages/plugin/dist
 /packages/server/dist
+/packages/plugin/coverage
+/packages/server/coverage
 /node_modules
 /build
 /demo-app/node_modules

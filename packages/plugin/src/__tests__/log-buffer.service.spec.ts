@@ -65,7 +65,30 @@ describe('LogBufferService', () => {
     service.add({ level: 'log', message: '2' })
     service.add({ level: 'log', message: '3' })
 
-    expect(service.getLogs(2).length).toBe(2)
-    expect(service.getLogs(2)[1].message).toBe('3')
+    const logs = service.getLogs(2)
+    expect(logs).toHaveLength(2)
+    expect(logs[0].message).toBe('2')
+  })
+
+  it('phải trả về mảng rỗng nếu không có log nào khớp với level yêu cầu', () => {
+    service.add({ level: 'log', message: '1' })
+    const errorLogs = service.getLogs(50, 'error')
+    expect(errorLogs).toHaveLength(0)
+  })
+
+    it('nên sử dụng số dòng mặc định là 50 nếu không truyền tham số lines', () => {
+      // Tạo instance mới với maxSize lớn hơn (100) để test việc lấy 50 dòng mặc định
+      const serviceLarge = new LogBufferService({ logBufferSize: 100 } as any)
+      for (let i = 0; i < 60; i++) {
+        serviceLarge.add({ level: 'log', message: `msg ${i}` })
+      }
+      expect(serviceLarge.getLogs()).toHaveLength(50)
+    })
+
+  describe('mặc định (default constructor values)', () => {
+    it('nên sử dụng kích thước buffer mặc định là 500 nếu cấu hình logBufferSize bị thiếu', () => {
+      const serviceDefault = new LogBufferService({} as any)
+      expect(serviceDefault.getStats().bufferSize).toBe(500)
+    })
   })
 })
