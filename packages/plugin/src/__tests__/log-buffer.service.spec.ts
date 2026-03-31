@@ -76,14 +76,14 @@ describe('LogBufferService', () => {
     expect(errorLogs).toHaveLength(0)
   })
 
-    it('nên sử dụng số dòng mặc định là 50 nếu không truyền tham số lines', () => {
-      // Tạo instance mới với maxSize lớn hơn (100) để test việc lấy 50 dòng mặc định
-      const serviceLarge = new LogBufferService({ logBufferSize: 100 } as any)
-      for (let i = 0; i < 60; i++) {
-        serviceLarge.add({ level: 'log', message: `msg ${i}` })
-      }
-      expect(serviceLarge.getLogs()).toHaveLength(50)
-    })
+  it('nên sử dụng số dòng mặc định là 50 nếu không truyền tham số lines', () => {
+    // Tạo instance mới với maxSize lớn hơn (100) để test việc lấy 50 dòng mặc định
+    const serviceLarge = new LogBufferService({ logBufferSize: 100 } as any)
+    for (let i = 0; i < 60; i++) {
+      serviceLarge.add({ level: 'log', message: `msg ${i}` })
+    }
+    expect(serviceLarge.getLogs()).toHaveLength(50)
+  })
 
   describe('mặc định (default constructor values)', () => {
     it('nên sử dụng kích thước buffer mặc định là 500 nếu cấu hình logBufferSize bị thiếu', () => {

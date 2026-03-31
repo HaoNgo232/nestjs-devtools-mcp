@@ -1,82 +1,51 @@
 # NestJS DevTools MCP
 
-Allows AI Coding Agents (Claude, Cursor, Copilot...) to observe the **runtime state** of your NestJS application — logs, routes, modules, providers — through the Model Context Protocol (MCP). This project provides a transparent bridge between your running NestJS app and AI tools to enhance debugging and development.
+[![npm version](https://img.shields.io/npm/v/@nestjs-devtools-mcp/plugin.svg?style=flat-square)](https://www.npmjs.com/package/@nestjs-devtools-mcp/plugin)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg?style=flat-square)](https://opensource.org/licenses/MIT)
 
-## 🏗️ **Architecture & System Design**
+**Give your AI coding agents (Claude, Cursor, Copilot) the superpower to observe your NestJS application's runtime state in real-time.**
 
-The project is designed with a 2-package model to ensure security and zero-interference with your original application logic:
+Ever wished AI could see your crashed application logs, registered routes, or current DI container without you copy-pasting terminal outputs? This project provides a transparent, zero-config bridge between your running NestJS app and your AI tools via the Model Context Protocol (MCP).
 
-```text
-AI Client (Claude, Cursor, ...)
-    │
-    │  (STDIO - MCP)
-    ▼
-nestjs-devtools-mcp (packages/server)          ← MCP Bridge (CLI)
-    │
-    │  HTTP (localhost only)
-    ▼
-@nestjs-devtools-mcp/plugin (packages/plugin)  ← NestJS Module
-    │
-    ▼
-NestJS Runtime (Logger, DI Container, Routes...)
-```
+---
 
-### **Plugin Package: `@nestjs-devtools-mcp/plugin`**
+## Features
 
-Runs **inside your NestJS process**, collecting runtime data and exposing internal HTTP endpoints:
+- **AI-Native:** Designed specifically for LLMs. No human UI, just raw, structured JSON context.
+- **Zero-Config Auto Discovery:** No ports to configure, no URLs to map. Just run it.
+- **Production Safe by Default:** Automatically disables itself in `NODE_ENV=production`.
+- **Localhost Only:** Bound strictly to local development context.
+- **100% Transparent:** Does not intercept, mutate, or hide your standard NestJS console logs.
 
-- `DevtoolsMcpModule`: Dynamic module for registration.
-- `DevtoolsMcpController`: Exposes `/_dev/mcp/health` and `/_dev/mcp/tools/get_logs` endpoints.
-- `CustomLoggerService`: Intercepts and forwards logs to the buffer.
-- `LogBufferService`: Circular buffer for recently generated logs.
-- `LocalhostOnlyGuard`: Protects endpoints, allowing access only from localhost.
+---
 
-### **Bridge Package: `nestjs-devtools-mcp`**
+## Quick Start (2 Steps)
 
-Runs as a standalone CLI tool, communicating with the AI client via STDIO and proxying requests to the plugin:
+### Step 1: Integrate Plugin into NestJS
 
-- Entry point with STDIO transport.
-- Auto-discovery scans ports to locate active NestJS apps with the plugin.
-- Proxy layer converts MCP tool calls into HTTP requests.
-
-## 📦 **Monorepo Packages**
-
-| Package                       | Path              | Purpose                                    | Installation                              |
-| ----------------------------- | ----------------- | ------------------------------------------ | ----------------------------------------- |
-| `@nestjs-devtools-mcp/plugin` | `packages/plugin` | Plugin to collect runtime data from NestJS | `npm install @nestjs-devtools-mcp/plugin` |
-| `nestjs-devtools-mcp`         | `packages/server` | MCP Bridge Server (run via npx)            | `npx -y nestjs-devtools-mcp@latest`       |
-| `demo-app`                    | `demo-app`        | Sample NestJS app for testing              | Local development only                    |
-
-## 🚀 **Quick Start (2 Steps)**
-
-### **Step 1: Integrate Plugin into NestJS**
-
-Install the plugin package:
-
+Install the plugin package in your NestJS application:
 ```bash
 npm install @nestjs-devtools-mcp/plugin
 ```
 
 Configure `app.module.ts`:
-
 ```typescript
-import { Module } from "@nestjs/common";
-import { DevtoolsMcpModule } from "@nestjs-devtools-mcp/plugin";
+import { Module } from '@nestjs/common';
+import { DevtoolsMcpModule } from '@nestjs-devtools-mcp/plugin';
 
 @Module({
   imports: [
-    DevtoolsMcpModule.register(), // Zero config - Automatically disables in production
+    DevtoolsMcpModule.register(), // Automatically disables in production
   ],
 })
 export class AppModule {}
 ```
 
-Apply the custom logger in `main.ts`:
-
+Apply the custom logger in `main.ts` to allow context interception:
 ```typescript
-import { NestFactory } from "@nestjs/core";
-import { AppModule } from "./app.module";
-import { applyDevtoolsLogger } from "@nestjs-devtools-mcp/plugin";
+import { NestFactory } from '@nestjs/core';
+import { AppModule } from './app.module';
+import { applyDevtoolsLogger } from '@nestjs-devtools-mcp/plugin';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, {
@@ -91,11 +60,9 @@ async function bootstrap() {
 bootstrap();
 ```
 
-> **Reference:** See `demo-app/src/app.module.ts` and `demo-app/src/main.ts` for a complete example.
+### Step 2: Configure MCP Client
 
-### **Step 2: Configure MCP Client**
-
-Add the following to your MCP settings (e.g., `claude_desktop_config.json`):
+Add the following to your AI Assistant's MCP settings (e.g., `claude_desktop_config.json`):
 
 ```json
 {
@@ -108,75 +75,45 @@ Add the following to your MCP settings (e.g., `claude_desktop_config.json`):
 }
 ```
 
-## 🛠️ **Development Guidelines**
+*That's it! Restart your MCP client and ask your AI: "Fetch the latest logs from my NestJS application."*
 
-**Basic Commands:**
+---
 
-```bash
-# Install all dependencies
-npm install
+## Documentation & Guides
 
-# Build all packages
-npm run build --workspaces
+Looking for advanced setups or want to contribute? Dive deeper into our docs:
 
-# Run tests
-npm run test --workspaces
+- [**Installation & Usage Guide**](./docs/installation.md) - Advanced setups, installing from source, and troubleshooting.
+- [**Development Guide**](./docs/development.md) - For contributors, detailing the monorepo setup, building, testing, and linting.
+- [**API Specs**](./packages/plugin/src/contracts/mcp-api.contract.ts) - The MCP protocol specification and contract.
 
-# Check code style
-npm run lint
+---
 
-# Start demo app
-cd demo-app && npm start
+## How it Works (Architecture)
+
+The project uses a secure 2-package model to avoid interfering with your app's logic:
+
+```text
+AI Client (Claude, Cursor, ...)
+    │
+    │  [STDIO - MCP Protocol]
+    ▼
+nestjs-devtools-mcp (Bridge Server via npx)
+    │
+    │  [HTTP - Localhost Only]
+    ▼
+@nestjs-devtools-mcp/plugin (Runs inside your App)
+    │
+    ▼
+NestJS Runtime (Logger, Container, Routes)
 ```
 
-**Design Principles:**
+1. **The Plugin** (`@nestjs-devtools-mcp/plugin`) runs inside your NestJS process, safely collecting runtime data into circular buffers and exposing an internal HTTP endpoint.
+2. **The Server** (`nestjs-devtools-mcp`) is a lightweight Bridge CLI that manages STDIO communication with the AI and proxies tool calls over HTTP to the plugin.
 
-- The plugin **must not** change the original behavior of the NestJS app.
-- Logs must be forwarded to the console as usual.
-- If the plugin crashes, the NestJS app must continue to function normally.
-- Endpoints allow access from localhost only.
-- Automatically disabled in production environment by default.
+---
 
-## 🐛 **Troubleshooting**
+## License
 
-### **1. MCP client cannot see the server**
-
-**Symptom:** AI client does not list the `nestjs-devtools` server.
-**Checks:**
-
-- MCP configuration is in correct JSON format.
-- `npx` is able to run/download `nestjs-devtools-mcp`.
-- Check MCP client logs for Node.js/TypeScript errors.
-
-### **2. Bridge cannot find NestJS app**
-
-**Symptom:** Tool `discover_servers` returns an empty array.
-**Checks:**
-
-- NestJS app has imported `DevtoolsMcpModule.register()`.
-- `applyDevtoolsLogger(app)` has been called in `main.ts`.
-- The app is running on localhost (Test: `GET http://localhost:3000/_dev/mcp/health`).
-
-### **3. No logs received**
-
-**Symptom:** Tool `get_logs` returns few or no logs.
-**Checks:**
-
-- Application is writing logs via NestJS Logger.
-- `CustomLoggerService` has been correctly applied.
-- `logBufferSize` is large enough for your needs.
-- Application context is not running in production mode.
-
-## 🤝 **Contributing**
-
-This project is currently for experimental and personal use. If you want to contribute:
-
-1. Fork the repository and create a branch from `main`.
-2. Perform changes and update tests if necessary.
-3. Open a Pull Request with a clear description of:
-   - What was modified.
-   - How to manually test the changes.
-
-## 📄 **License**
-
-MIT – For production environments, please reassess security assumptions and plugin behavior to fit your system.
+MIT © HaoNgo232.
+For production environments, always reassess security assumptions before deploying plugins that observe application state.
