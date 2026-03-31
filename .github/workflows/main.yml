@@ -17,23 +17,28 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: 'npm'
+          cache: 'pnpm'
 
-      - name: Install dependencies (deterministic)
-        run: npm ci
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
 
       - name: Lint check
-        run: npm run lint
+        run: pnpm run lint
 
       - name: Build core packages
-        run: npm run build -w @nestjs-devtools-mcp/plugin -w nestjs-devtools-mcp
+        run: pnpm build --filter "@nestjs-devtools-mcp/plugin" --filter "nestjs-devtools-mcp"
 
       - name: Test core packages
-        run: npm run test -w @nestjs-devtools-mcp/plugin -w nestjs-devtools-mcp
+        run: pnpm test --filter "@nestjs-devtools-mcp/plugin" --filter "nestjs-devtools-mcp"
 
   # ──────────────────────────────────────────────
   # Job 2: Publish — chỉ khi push tag v*
@@ -49,50 +54,47 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 20
           registry-url: 'https://registry.npmjs.org'
-          cache: 'npm'
+          cache: 'pnpm'
 
       # ── Extract version từ git tag ──
-      # Tag v0.2.0 → VERSION = 0.2.0
-      # Đảm bảo package.json luôn khớp với tag, không cần sửa tay
       - name: Extract version from tag
         id: version
         run: |
           TAG_VERSION="${GITHUB_REF#refs/tags/v}"
           echo "value=${TAG_VERSION}" >> "$GITHUB_OUTPUT"
-          echo "📦 Publishing version: ${TAG_VERSION}"
+          echo "Publishing version: ${TAG_VERSION}"
 
-      # ── Inject version vào cả hai package.json ──
-      - name: Sync version to plugin package.json
+      # ── Inject version vào các package.json ──
+      - name: Sync version
         run: |
-          cd packages/plugin
-          npm version "${{ steps.version.outputs.value }}" --no-git-tag-version --allow-same-version
+          pnpm exec npm version "${{ steps.version.outputs.value }}" --no-git-tag-version --allow-same-version -r --filter "@nestjs-devtools-mcp/plugin" --filter "nestjs-devtools-mcp"
 
-      - name: Sync version to server package.json
-        run: |
-          cd packages/server
-          npm version "${{ steps.version.outputs.value }}" --no-git-tag-version --allow-same-version
-
-      - name: Install dependencies (deterministic)
-        run: npm ci
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
 
       - name: Build core packages
-        run: npm run build -w @nestjs-devtools-mcp/plugin -w nestjs-devtools-mcp
+        run: pnpm build --filter "@nestjs-devtools-mcp/plugin" --filter "nestjs-devtools-mcp"
 
       # ── Publish cả hai package ──
       - name: Publish @nestjs-devtools-mcp/plugin
         working-directory: ./packages/plugin
-        run: npm publish --access public
+        run: pnpm publish --access public --no-git-checks
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       - name: Publish nestjs-devtools-mcp (Bridge)
         working-directory: ./packages/server
-        run: npm publish --access public
+        run: pnpm publish --access public --no-git-checks
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
@@ -100,13 +102,8 @@ jobs:
       - name: Verify published versions
         run: |
           VERSION="${{ steps.version.outputs.value }}"
-          echo "⏳ Đợi npm registry cập nhật..."
+          echo "Doi npm registry cap nhat..."
           sleep 15
-
-          echo "🔍 Kiểm tra @nestjs-devtools-mcp/plugin@${VERSION}"
-          npm view "@nestjs-devtools-mcp/plugin@${VERSION}" version
-
-          echo "🔍 Kiểm tra nestjs-devtools-mcp@${VERSION}"
-          npm view "nestjs-devtools-mcp@${VERSION}" version
-
-          echo "✅ Cả hai package đã publish thành công!"
+          pnpm info "@nestjs-devtools-mcp/plugin" version | grep "${VERSION}"
+          pnpm info "nestjs-devtools-mcp" version | grep "${VERSION}"
+          echo "Ca hai package da publish thanh cong!"

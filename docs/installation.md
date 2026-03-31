@@ -4,7 +4,7 @@ This document provides detailed instructions for installing the NestJS DevTools 
 
 ---
 
-## 🛠 Standard Installation (NPM)
+## Standard Installation (NPM)
 
 For most users, follow the **Quick Start** guide in the main [**README.md**](../README.md).
 
@@ -14,7 +14,7 @@ For most users, follow the **Quick Start** guide in the main [**README.md**](../
 
 ---
 
-## 🏗 Installation for Developers (Local Repository)
+## Installation for Developers (Local Repository)
 
 If you are contributing to this project or want to use the latest unreleased features directly from the source code, follow these steps.
 
@@ -22,15 +22,21 @@ If you are contributing to this project or want to use the latest unreleased fea
 First, clone the repository and build both the plugin and the server packages:
 ```bash
 cd /path/to/nestjs-devtools-mcp
-npm install
-npm run build --workspaces
+# Using npm
+npm install && npm run build --workspaces
+
+# Using pnpm (Recommended for monorepos)
+pnpm install && pnpm run build
 ```
 
 ### Step 2: Link the Plugin to your NestJS App
 In your target NestJS application's root directory, install the plugin using the absolute path to its folder:
 ```bash
-# Example
+# Using npm
 npm install /home/user/projects/nestjs-devtools-mcp/packages/plugin
+
+# Using pnpm
+pnpm add /home/user/projects/nestjs-devtools-mcp/packages/plugin
 ```
 *Note: This creates a direct dependency on your local build of the plugin.*
 
@@ -59,7 +65,7 @@ Instead of using `npx`, point your MCP client directly to the compiled entry poi
 
 ---
 
-## 💡 Troubleshooting & Notes
+## Troubleshooting & Notes
 
 - **Port Range**: The Bridge CLI automatically scans ports `3000-3010`. If your NestJS app runs on a different port, ensure it falls within this range or wait for the `--port` configuration update in Phase 2.
 - **Security Check**: The plugin only allows connections from `127.0.0.1` and `::1`. If you are running inside a container, ensure the network mode is `host` or the bridge IP is correctly mapped (refer to `LocalhostOnlyGuard` for implementation details).
