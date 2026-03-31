@@ -1,4 +1,4 @@
-# nestjs-devtools-mcp (Bridge Server)
+# nestjs-devtools-mcp
 
 **The CLI Bridge for NestJS DevTools MCP**
 
