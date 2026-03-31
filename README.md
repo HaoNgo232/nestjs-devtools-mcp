@@ -27,7 +27,6 @@ More tools may be added in future releases.
 ### Step 1: Integrate Plugin into NestJS
 
 Install the plugin package in your NestJS application:
-Install the plugin package in your NestJS application:
 
 ```bash
 # Using npm
