@@ -5,8 +5,8 @@ import { CustomLoggerService } from './custom-logger.service';
 import { DevtoolsMcpController } from './devtools-mcp.controller';
 
 /**
- * DevtoolsMcpModule được thiết kế để nhúng vào NestJS App.
- * Cung cấp khả năng giao tiếp thời gian thực cho các MCP Agent thông qua Bridge.
+ * DevtoolsMcpModule is designed to be embedded in a NestJS App.
+ * Provides real-time communication capabilities for MCP Agents via Bridge.
  */
 @Global()
 @Module({})
@@ -14,8 +14,8 @@ export class DevtoolsMcpModule {
   private static readonly logger = new Logger('DevtoolsMcp');
 
   /**
-   * Phương thức đăng ký module động, cho phép cấu hình linh hoạt.
-   * Chú ý: Mặc định disabled trên môi trường production.
+   * Dynamic module registration method, allowing flexible configuration.
+   * Note: Disabled on production environment by default.
    */
   static register(options: DevtoolsMcpOptions = {}): DynamicModule {
     const defaultOptions: DevtoolsMcpOptions = {

@@ -1,14 +1,14 @@
-# NestJS DevTools MCP 🚀
+# NestJS DevTools MCP
 
 Cho phép các AI Coding Agents (Claude, Cursor, Copilot...) **nhìn thấy runtime state** của ứng dụng NestJS của bạn — logs, routes, modules, providers — thông qua Model Context Protocol (MCP).
 
-## 🌟 Tính năng
+## Tính năng
 - **Runtime Log Monitoring**: AI có thể đọc log trực tiếp từ server đang chạy.
 - **Auto-Discovery**: Tự động tìm kiếm server NestJS trên localhost.
 - **Zero Configuration**: Cài đặt tối giản, không cần cấu hình port thủ công.
 - **Production Safe**: Chỉ cho phép truy cập từ localhost và tự động tắt ở môi trường production.
 
-## 📦 Các Package
+## Các Package
 
 | Package | Mục đích | Cài đặt |
 | --- | --- | --- |
@@ -17,7 +17,7 @@ Cho phép các AI Coding Agents (Claude, Cursor, Copilot...) **nhìn thấy runt
 
 ---
 
-## 🚀 Hướng dẫn cài đặt (2 Bước)
+## Hướng dẫn cài đặt (2 Bước)
 
 ### Bước 1: Cài đặt và tích hợp Plugin vào NestJS
 
@@ -75,7 +75,7 @@ Thêm cấu hình sau vào MCP settings của bạn (thường là `claude_deskt
 
 ---
 
-## 🛠️ Phát triển & Kiểm thử
+## Phát triển & Kiểm thử
 
 Dự án sử dụng Monorepo với npm workspaces:
 
@@ -92,7 +92,7 @@ npm test --workspaces
 
 ---
 
-## 🚢 Hướng dẫn Publish lên NPM Store
+## Hướng dẫn Publish lên NPM Store
 
 Dự án này sử dụng cấu trúc Monorepo, bạn cần publish từng package riêng biệt.
 
@@ -119,5 +119,5 @@ npm publish --access public
 
 ---
 
-## 🛡️ License
-MIT - Tự do sử dụng và đóng góp! 🇻🇳
+## License
+MIT - Tự do sử dụng và đóng góp!

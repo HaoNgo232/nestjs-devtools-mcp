@@ -4,8 +4,8 @@ import { LocalhostOnlyGuard } from './localhost-only.guard';
 import { DEVTOOLS_OPTIONS_TOKEN, DevtoolsMcpOptions } from './devtools-mcp.options';
 
 /**
- * Controller này expose các HTTP endpoint cần thiết để bridge có thể thu thập thông tin runtime.
- * Endpoint path được mặc định là /_dev/mcp
+ * This Controller exposes the necessary HTTP endpoints for the bridge to collect runtime information.
+ * The default endpoint path is /_dev/mcp
  */
 @Controller('_dev/mcp')
 @UseGuards(LocalhostOnlyGuard)
@@ -19,7 +19,7 @@ export class DevtoolsMcpController {
   ) {}
 
   /**
-   * Endpoint phục vụ cho việc kiểm tra sức khỏe và tự phát hiện (auto-discovery) của bridge.
+   * Endpoint for health checks and bridge auto-discovery.
    */
   @Get('health')
   getHealth() {
@@ -27,15 +27,15 @@ export class DevtoolsMcpController {
       status: 'ok',
       name: 'nestjs-devtools-mcp',
       version: this.version,
-      nestVersion: 'unknown', // Có thể update sau từ DiscoveryService nếu cần
+      nestVersion: 'unknown', // To be updated later from DiscoveryService if needed
       pid: process.pid,
       uptime: Math.floor(process.uptime()),
     };
   }
 
   /**
-   * Endpoint cho phép bridge lấy các log entry được lưu trữ tạm thời trong buffer.
-   * @param body Các tham số lọc lines, level và since
+   * Endpoint allowing the bridge to retrieve log entries temporarily stored in the buffer.
+   * @param body Filter parameters: lines, level and since
    */
   @Post('tools/get_logs')
   getLogs(

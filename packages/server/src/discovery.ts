@@ -8,19 +8,19 @@ export interface NestServerInfo {
 }
 
 /**
- * Scan các port trong một khoảng nhất định để tìm server NestJS có cài plugin DevtoolsMcp.
- * @param startPort Port bắt đầu scan.
- * @param endPort Port kết thúc scan.
+ * Scan ports in a specific range to find NestJS servers with the DevtoolsMcp plugin installed.
+ * @param startPort Starting port for scanning.
+ * @param endPort Ending port for scanning.
  */
 export async function discoverServers(startPort = 3000, endPort = 3010): Promise<NestServerInfo[]> {
   const servers: NestServerInfo[] = [];
   const ports = Array.from({ length: endPort - startPort + 1 }, (_, i) => startPort + i);
 
-  // Scan các port song song để tăng hiệu suất
+  // Scan ports in parallel to increase performance
   const results = await Promise.allSettled(
     ports.map(async (port) => {
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 600); // Timeout ngắn cho việc scan
+      const timeoutId = setTimeout(() => controller.abort(), 600); // Short timeout for scanning
 
       try {
         const response = await fetch(`http://localhost:${port}/_dev/mcp/health`, {

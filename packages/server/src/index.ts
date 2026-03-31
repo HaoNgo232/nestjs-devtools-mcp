@@ -10,8 +10,8 @@ import { discoverServers } from './discovery.js';
 import { DevToolsProxy } from './proxy.js';
 
 /**
- * NestJS DevTools MCP - Bridge khởi chạy qua STDIO transport.
- * AI Client sẽ spawn process này để tương tác với NestJS App.
+ * NestJS DevTools MCP - Bridge launched via STDIO transport.
+ * AI Client will spawn this process to interact with the NestJS App.
  */
 const server = new Server(
   {
@@ -28,14 +28,14 @@ const server = new Server(
 const devtoolsProxy = new DevToolsProxy();
 
 /**
- * Đăng ký danh sách các tool khả dụng cho AI Client.
+ * Register the list of available tools for the AI Client.
  */
 server.setRequestHandler(ListToolsRequestSchema, async () => {
   return {
     tools: [
       {
         name: 'discover_servers',
-        description: 'Quét localhost để tìm các NestJS servers đang tích hợp plugin DevTools.',
+        description: 'Scan localhost for NestJS servers integrated with the DevTools plugin.',
         inputSchema: {
           type: 'object',
           properties: {},
@@ -43,22 +43,22 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
       },
       {
         name: 'get_logs',
-        description: 'Lấy danh sách log runtime của NestJS server đang chạy (Buffer logs).',
+        description: 'Get NestJS server runtime logs (Buffer logs).',
         inputSchema: {
           type: 'object',
           properties: {
             port: {
               type: 'number',
-              description: 'Cổng của NestJS server (VD: 3000). Nếu chỉ có 1 server, sẽ tự động dùng server đó.',
+              description: 'NestJS server port (e.g., 3000). If only 1 server is found, it will be used automatically.',
             },
             lines: {
               type: 'number',
-              description: 'Số dòng log muốn lấy (mặc định: 50).',
+              description: 'Number of log lines to retrieve (default: 50).',
             },
             level: {
               type: 'string',
               enum: ['all', 'log', 'error', 'warn', 'debug', 'verbose'],
-              description: 'Lọc log theo level.',
+              description: 'Filter logs by level.',
             },
           },
         },
@@ -68,7 +68,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
 });
 
 /**
- * Xử lý yêu cầu Tool Call từ AI Client và proxy/thực hiện logic bridge.
+ * Handle Tool Call requests from the AI Client and proxy/execute bridge logic.
  */
 server.setRequestHandler(CallToolRequestSchema, async (request) => {
   const { name, arguments: args } = request.params;
@@ -102,7 +102,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       }
 
       default:
-        throw new Error(`Tool không được hỗ trợ: ${name}`);
+        throw new Error(`Tool not supported: ${name}`);
     }
   } catch (error: unknown) {
     const errorMessage = error instanceof Error ? error.message : String(error);
@@ -114,15 +114,15 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
 });
 
 /**
- * Khởi tạo transport và bắt đầu lắng nghe STDIO.
+ * Initialize transport and start listening to STDIO.
  */
 async function main() {
   const transport = new StdioServerTransport();
   await server.connect(transport);
-  console.error('NestJS DevTools MCP Bridge đã khởi chạy và đang lắng nghe STDIO.');
+  console.error('NestJS DevTools MCP Bridge has started and is listening on STDIO.');
 }
 
 main().catch((err) => {
-  console.error('Lỗi nghiêm trọng khi khởi chạy NestJS DevTools bridge:', err);
+  console.error('Critical error during NestJS DevTools bridge launch:', err);
   process.exit(1);
 });

@@ -2,9 +2,9 @@ import { Injectable, ConsoleLogger, LoggerService } from '@nestjs/common';
 import { LogBufferService } from './log-buffer.service';
 
 /**
- * CustomLoggerService này thay thế Logger mặc định của NestJS nhằm:
- * 1. Thu thập log vào LogBufferService phục vụ cho việc quan sát từ MCP.
- * 2. Forward các log này ra Console để đảm bảo terminal vẫn hiển thị như bình thường.
+ * CustomLoggerService replaces the default NestJS Logger to:
+ * 1. Collect logs into LogBufferService for MCP observation.
+ * 2. Forward these logs to Console to ensure the terminal displays as usual.
  */
 @Injectable()
 export class CustomLoggerService extends ConsoleLogger implements LoggerService {
@@ -16,7 +16,7 @@ export class CustomLoggerService extends ConsoleLogger implements LoggerService 
   }
 
   /**
-   * Override hàm log chuẩn của NestJS để đồng thời ghi vào buffer và console
+   * Override the standard NestJS log method to simultaneously write to buffer and console
    */
   override log(message: unknown, context?: string) {
     this.bufferService.add({
@@ -28,7 +28,7 @@ export class CustomLoggerService extends ConsoleLogger implements LoggerService 
   }
 
   /**
-   * Override hàm error chuẩn của NestJS
+   * Override the standard NestJS error method
    */
   override error(message: unknown, trace?: string, context?: string) {
     this.bufferService.add({
@@ -41,7 +41,7 @@ export class CustomLoggerService extends ConsoleLogger implements LoggerService 
   }
 
   /**
-   * Override hàm warn chuẩn của NestJS
+   * Override the standard NestJS warn method
    */
   override warn(message: unknown, context?: string) {
     this.bufferService.add({
@@ -53,7 +53,7 @@ export class CustomLoggerService extends ConsoleLogger implements LoggerService 
   }
 
   /**
-   * Override hàm debug chuẩn của NestJS
+   * Override the standard NestJS debug method
    */
   override debug(message: unknown, context?: string) {
     this.bufferService.add({
@@ -65,7 +65,7 @@ export class CustomLoggerService extends ConsoleLogger implements LoggerService 
   }
 
   /**
-   * Override hàm verbose chuẩn của NestJS
+   * Override the standard NestJS verbose method
    */
   override verbose(message: unknown, context?: string) {
     this.bufferService.add({
@@ -77,7 +77,7 @@ export class CustomLoggerService extends ConsoleLogger implements LoggerService 
   }
 
   /**
-   * Hỗ trợ định dạng lại message nếu nó là object thay vì string
+   * Support re-formatting the message if it is an object instead of a string
    */
   private formatMyMessage(message: unknown): string {
     if (typeof message === 'object') {

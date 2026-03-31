@@ -22,8 +22,8 @@ export class LogBufferService {
   }
 
   /**
-   * Thêm một log mới vào circular buffer
-   * @param entry Đối tượng log chứa thông tin về level, message, context và trace
+   * Add a new log to the circular buffer
+   * @param entry Log object containing level, message, context and trace information
    */
   add(entry: Omit<LogEntry, 'timestamp'>) {
     const logEntry: LogEntry = {
@@ -32,16 +32,16 @@ export class LogBufferService {
     };
 
     if (this.buffer.length >= this.maxSize) {
-      this.buffer.shift(); // Loại bỏ phần tử cũ nhất nếu buffer đầy
+      this.buffer.shift(); // Remove the oldest element if buffer is full
     }
     this.buffer.push(logEntry);
   }
 
   /**
-   * Lấy danh sách log từ buffer dựa trên các tiêu chí lọc
-   * @param lines Số dòng log tối đa muốn lấy
-   * @param level Filter theo level log
-   * @returns Danh sách các log entry
+   * Get logs from the buffer based on filtering criteria
+   * @param lines Maximum number of log lines to retrieve
+   * @param level Filter by log level
+   * @returns List of log entries
    */
   getLogs(lines = 50, level: string = 'all'): LogEntry[] {
     let filtered = this.buffer;
@@ -52,7 +52,7 @@ export class LogBufferService {
   }
 
   /**
-   * Trả về thông tin meta về trạng thái của buffer
+   * Returns metadata about the buffer status
    */
   getStats() {
     return {

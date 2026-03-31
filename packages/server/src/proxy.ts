@@ -1,14 +1,14 @@
 import { discoverServers, NestServerInfo } from './discovery.js';
 
 /**
- * Lớp xử lý proxy request từ MCP server tới plugin đang chạy trong NestJS app.
+ * Class for handling proxy requests from the MCP server to the plugin running in the NestJS app.
  */
 export class DevToolsProxy {
   private lastSelectedPort: number | null = null;
 
   /**
-   * Tự động xác định port của NestJS server để thực hiện tool call.
-   * Ưu tiên server duy nhất tìm thấy hoặc port được user cung cấp.
+   * Automatically determine the NestJS server port to perform a tool call.
+   * Prioritize the single server found or the port explicitly provided.
    */
   async resolvePort(explicitPort?: number): Promise<number> {
     if (explicitPort) {
@@ -23,14 +23,14 @@ export class DevToolsProxy {
     }
 
     if (instances.length > 1) {
-      throw new Error(`Nhiều server NestJS được tìm thấy trên các port (${instances.map(i => i.port).join(', ')}). Vui lòng cung cấp chính xác port mong muốn.`);
+      throw new Error(`Multiple NestJS servers found on ports (${instances.map(i => i.port).join(', ')}). Please provide the specific port desired.`);
     }
 
-    throw new Error('Không tìm thấy NestJS server nào đang chạy DevTools MCP plugin (port 3000-3010). Hãy đảm bảo plugin đã được install và import.');
+    throw new Error('No NestJS server found running the DevTools MCP plugin (ports 3000-3010). Please ensure the plugin is installed and imported.');
   }
 
   /**
-   * Gọi HTTP request tới endpoint cụ thể của plugin.
+   * Make an HTTP request to a specific plugin endpoint.
    */
   async callPluginTool(port: number, toolName: string, payload: unknown = {}): Promise<unknown> {
     const url = `http://localhost:${port}/_dev/mcp/tools/${toolName}`;

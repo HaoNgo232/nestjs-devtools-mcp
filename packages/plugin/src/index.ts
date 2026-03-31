@@ -4,3 +4,6 @@ export * from './log-buffer.service';
 export * from './custom-logger.service';
 export * from './localhost-only.guard';
 export * from './devtools-mcp.controller';
+export * from './devtools-mcp.utils';
+export * from './contracts';
+export * from './collectors';
