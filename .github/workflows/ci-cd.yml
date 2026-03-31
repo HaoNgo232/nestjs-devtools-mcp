@@ -1,0 +1,112 @@
+name: NestJS DevTools CI/CD
+
+on:
+  push:
+    branches: [main]
+    tags: ['v*']
+  pull_request:
+    branches: [main]
+
+jobs:
+  # ──────────────────────────────────────────────
+  # Job 1: Build & Test — mỗi commit / PR
+  # ──────────────────────────────────────────────
+  build-test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Install dependencies (deterministic)
+        run: npm ci
+
+      - name: Lint check
+        run: npm run lint
+
+      - name: Build all workspaces
+        run: npm run build --workspaces
+
+      - name: Test all workspaces
+        run: npm run test --workspaces
+
+  # ──────────────────────────────────────────────
+  # Job 2: Publish — chỉ khi push tag v*
+  # ──────────────────────────────────────────────
+  publish:
+    needs: build-test
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          registry-url: 'https://registry.npmjs.org'
+          cache: 'npm'
+
+      # ── Extract version từ git tag ──
+      # Tag v0.2.0 → VERSION = 0.2.0
+      # Đảm bảo package.json luôn khớp với tag, không cần sửa tay
+      - name: Extract version from tag
+        id: version
+        run: |
+          TAG_VERSION="${GITHUB_REF#refs/tags/v}"
+          echo "value=${TAG_VERSION}" >> "$GITHUB_OUTPUT"
+          echo "📦 Publishing version: ${TAG_VERSION}"
+
+      # ── Inject version vào cả hai package.json ──
+      - name: Sync version to plugin package.json
+        run: |
+          cd packages/plugin
+          npm version "${{ steps.version.outputs.value }}" --no-git-tag-version --allow-same-version
+
+      - name: Sync version to server package.json
+        run: |
+          cd packages/server
+          npm version "${{ steps.version.outputs.value }}" --no-git-tag-version --allow-same-version
+
+      - name: Install dependencies (deterministic)
+        run: npm ci
+
+      - name: Build packages
+        run: npm run build --workspaces
+
+      # ── Publish cả hai package ──
+      - name: Publish @nestjs-devtools-mcp/plugin
+        working-directory: ./packages/plugin
+        run: npm publish --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Publish nestjs-devtools-mcp (Bridge)
+        working-directory: ./packages/server
+        run: npm publish --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      # ── Verify publish thành công ──
+      - name: Verify published versions
+        run: |
+          VERSION="${{ steps.version.outputs.value }}"
+          echo "⏳ Đợi npm registry cập nhật..."
+          sleep 15
+
+          echo "🔍 Kiểm tra @nestjs-devtools-mcp/plugin@${VERSION}"
+          npm view "@nestjs-devtools-mcp/plugin@${VERSION}" version
+
+          echo "🔍 Kiểm tra nestjs-devtools-mcp@${VERSION}"
+          npm view "nestjs-devtools-mcp@${VERSION}" version
+
+          echo "✅ Cả hai package đã publish thành công!"

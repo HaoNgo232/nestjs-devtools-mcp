@@ -1,6 +1,6 @@
 {
   "name": "nestjs-devtools-mcp",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Bridge between AI client and NestJS application via MCP protocol",
   "author": "Hạo",
   "license": "MIT",
@@ -11,7 +11,9 @@
   "bin": {
     "nestjs-devtools-mcp": "./dist/index.js"
   },
-  "files": ["dist"],
+  "files": [
+    "dist"
+  ],
   "scripts": {
     "build": "tsc && chmod +x dist/index.js"
   },
