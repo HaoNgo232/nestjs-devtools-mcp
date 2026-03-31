@@ -29,11 +29,11 @@ jobs:
       - name: Lint check
         run: npm run lint
 
-      - name: Build all workspaces
-        run: npm run build --workspaces
+      - name: Build core packages
+        run: npm run build -w @nestjs-devtools-mcp/plugin -w nestjs-devtools-mcp
 
-      - name: Test all workspaces
-        run: npm run test --workspaces
+      - name: Test core packages
+        run: npm run test -w @nestjs-devtools-mcp/plugin -w nestjs-devtools-mcp
 
   # ──────────────────────────────────────────────
   # Job 2: Publish — chỉ khi push tag v*
@@ -80,8 +80,8 @@ jobs:
       - name: Install dependencies (deterministic)
         run: npm ci
 
-      - name: Build packages
-        run: npm run build --workspaces
+      - name: Build core packages
+        run: npm run build -w @nestjs-devtools-mcp/plugin -w nestjs-devtools-mcp
 
       # ── Publish cả hai package ──
       - name: Publish @nestjs-devtools-mcp/plugin

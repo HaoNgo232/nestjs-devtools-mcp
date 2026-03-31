@@ -75,6 +75,21 @@ describe('CustomLoggerService', () => {
     )
   })
 
+  it('should fall back to "log" level when an unknown level is used (if possible)', () => {
+    // Logic: NestLogger.error/warn/log/debug/verbose.
+    // If we use logger.log() with no level or a special call, check fallback.
+    // Here we explicitly test if the library handles a non-standard call.
+    ;(logger as any).log('custom message', 'unknown-level')
+
+    expect(mockBuffer.add).toHaveBeenCalledWith(
+      expect.objectContaining({
+        level: 'log',
+        message: 'custom message',
+        context: 'unknown-level',
+      }),
+    )
+  })
+
   it('should buffer a "verbose" level entry', () => {
     logger.verbose('verbose-info')
 

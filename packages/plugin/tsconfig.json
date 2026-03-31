@@ -23,7 +23,8 @@
     "useUnknownInCatchVariables": true,
     
     "forceConsistentCasingInFileNames": true,
-    "noFallthroughCasesInSwitch": true
+    "noFallthroughCasesInSwitch": true,
+    "isolatedModules": true
   },
   "include": ["src/**/*"]
 }

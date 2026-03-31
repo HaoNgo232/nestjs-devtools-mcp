@@ -3,10 +3,11 @@
   "private": true,
   "scripts": {
     "start": "ts-node src/main.ts",
-    "build": "tsc"
+    "build": "tsc",
+    "test": "echo \"No tests yet for demo app\""
   },
   "dependencies": {
-    "@nestjs/common": "^11.0.0",
+    "@nestjs/common": "^11.1.17",
     "@nestjs/core": "^11.0.0",
     "@nestjs/platform-express": "^11.0.0",
     "reflect-metadata": "^0.2.0",
@@ -15,8 +16,8 @@
   },
   "devDependencies": {
     "ts-node": "^10.9.2",
-    "typescript": "^5.0.0",
-    "@types/node": "^20.0.0"
+    "typescript": "^5.7.3",
+    "@types/node": "^22.19.15"
   },
   "version": "0.0.1"
 }
