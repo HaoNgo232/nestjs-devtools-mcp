@@ -13,7 +13,7 @@ import { DevToolsProxy } from './proxy.js'
 const server = new Server(
   {
     name: 'nestjs-devtools-mcp',
-    version: '0.1.0',
+    version: '0.1.3',
   },
   {
     capabilities: {
@@ -50,7 +50,8 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
             },
             lines: {
               type: 'number',
-              description: 'Number of log lines to retrieve (default: 50).',
+              description:
+                'Number of log lines to retrieve (default: 50). Use a reasonable number (e.g. 50-100) to avoid overwhelming the context with unnecessary data.',
             },
             level: {
               type: 'string',
