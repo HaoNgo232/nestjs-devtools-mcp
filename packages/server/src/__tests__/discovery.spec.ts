@@ -7,8 +7,16 @@ import { discoverServers, NestServerInfo } from '../discovery'
 const mockFetch = jest.fn()
 global.fetch = mockFetch as any
 
+// Mock execSync để cô lập getListenPorts
+const mockExecSync = jest.fn()
+jest.mock('child_process', () => ({
+  execSync: (cmd: string) => mockExecSync(cmd),
+}))
+
 beforeEach(() => {
   mockFetch.mockReset()
+  mockExecSync.mockReset()
+  mockExecSync.mockReturnValue('') // Mặc định không có port nào đang listen
 })
 
 // ─────────────────────────────────────────────────────
@@ -202,12 +210,17 @@ describe('discoverServers', () => {
   it('should call fetch with AbortController signal', async () => {
     // Arrange
     mockFetch.mockRejectedValue(new Error('ECONNREFUSED'))
+    mockExecSync.mockReturnValue('') // Không có listen port từ hệ thống
 
     // Act
-    await discoverServers(3000, 3000) // chỉ scan 1 port cho đơn giản
+    await discoverServers(3000, 3000) // chỉ scan 1 port (3000)
 
-    // Assert: fetch được gọi với signal
-    expect(mockFetch).toHaveBeenCalledTimes(1)
+    /**
+     * Assert: Với logic Zero-Config, Discovery thử 3 prefix:
+     * ['', '/api', '/v1'] cho mỗi port.
+     * Vì đã mock execSync trả về rỗng, tổng cộng có 3 lần gọi cho port 3000.
+     */
+    expect(mockFetch).toHaveBeenCalledTimes(3)
     const callArgs = mockFetch.mock.calls[0]
     expect(callArgs[0]).toBe('http://localhost:3000/_dev/mcp/health')
     expect(callArgs[1]).toHaveProperty('signal')

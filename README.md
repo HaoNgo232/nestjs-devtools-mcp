@@ -11,13 +11,14 @@ Ever wished AI could see your crashed application logs, registered routes, or cu
 
 ---
 
-## Features
+## Current MCP Tools
 
-- **AI-Native:** Designed specifically for LLMs. No human UI, just raw, structured JSON context.
-- **Zero-Config Auto Discovery:** No ports to configure, no URLs to map. Just run it.
-- **Production Safe by Default:** Automatically disables itself in `NODE_ENV=production`.
-- **Localhost Only:** Bound strictly to local development context.
-- **100% Transparent:** Does not intercept, mutate, or hide your standard NestJS console logs.
+Currently available tools:
+
+- `discover_servers` — Find local NestJS servers with the plugin enabled.
+- `get_logs` — Retrieve recent runtime logs from a detected NestJS server.
+
+More tools may be added in future releases.
 
 ---
 
