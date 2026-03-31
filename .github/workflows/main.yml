@@ -34,11 +34,11 @@ jobs:
       - name: Lint check
         run: pnpm run lint
 
-      - name: Build core packages
-        run: pnpm build --filter "@nestjs-devtools-mcp/plugin" --filter "nestjs-devtools-mcp"
+      - name: Build monorepo
+        run: pnpm build
 
-      - name: Test core packages
-        run: pnpm test --filter "@nestjs-devtools-mcp/plugin" --filter "nestjs-devtools-mcp"
+      - name: Test monorepo
+        run: pnpm test
 
   # ──────────────────────────────────────────────
   # Job 2: Publish — chỉ khi push tag v*
@@ -82,8 +82,8 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Build core packages
-        run: pnpm build --filter "@nestjs-devtools-mcp/plugin" --filter "nestjs-devtools-mcp"
+      - name: Build monorepo
+        run: pnpm build
 
       # ── Publish cả hai package ──
       - name: Publish @nestjs-devtools-mcp/plugin
