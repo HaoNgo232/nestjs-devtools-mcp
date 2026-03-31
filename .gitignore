@@ -1,7 +1,9 @@
 # compiled output
 /dist
 /packages/plugin/dist
+/packages/plugin/node_modules
 /packages/server/dist
+/packages/server/node_modules
 /packages/plugin/coverage
 /packages/server/coverage
 /node_modules
