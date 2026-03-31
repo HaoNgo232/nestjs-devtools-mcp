@@ -1,24 +1,24 @@
-import { Injectable, Inject } from '@nestjs/common';
-import { DEVTOOLS_OPTIONS_TOKEN, DevtoolsMcpOptions } from './devtools-mcp.options';
+import { Injectable, Inject } from '@nestjs/common'
+import { DEVTOOLS_OPTIONS_TOKEN, DevtoolsMcpOptions } from './devtools-mcp.options'
 
 export interface LogEntry {
-  timestamp: number;
-  level: 'log' | 'error' | 'warn' | 'debug' | 'verbose';
-  message: string;
-  context?: string;
-  trace?: string;
+  timestamp: number
+  level: 'log' | 'error' | 'warn' | 'debug' | 'verbose'
+  message: string
+  context?: string
+  trace?: string
 }
 
 @Injectable()
 export class LogBufferService {
-  private readonly buffer: LogEntry[] = [];
-  private readonly maxSize: number;
+  private readonly buffer: LogEntry[] = []
+  private readonly maxSize: number
 
   constructor(
     @Inject(DEVTOOLS_OPTIONS_TOKEN)
     private readonly options: DevtoolsMcpOptions,
   ) {
-    this.maxSize = options.logBufferSize || 500;
+    this.maxSize = options.logBufferSize || 500
   }
 
   /**
@@ -29,12 +29,12 @@ export class LogBufferService {
     const logEntry: LogEntry = {
       ...entry,
       timestamp: Date.now(),
-    };
+    }
 
     if (this.buffer.length >= this.maxSize) {
-      this.buffer.shift(); // Remove the oldest element if buffer is full
+      this.buffer.shift() // Remove the oldest element if buffer is full
     }
-    this.buffer.push(logEntry);
+    this.buffer.push(logEntry)
   }
 
   /**
@@ -44,11 +44,11 @@ export class LogBufferService {
    * @returns List of log entries
    */
   getLogs(lines = 50, level: string = 'all'): LogEntry[] {
-    let filtered = this.buffer;
+    let filtered = this.buffer
     if (level !== 'all') {
-      filtered = this.buffer.filter(e => e.level === level);
+      filtered = this.buffer.filter((e) => e.level === level)
     }
-    return filtered.slice(-lines);
+    return filtered.slice(-lines)
   }
 
   /**
@@ -58,6 +58,6 @@ export class LogBufferService {
     return {
       total: this.buffer.length,
       bufferSize: this.maxSize,
-    };
+    }
   }
 }

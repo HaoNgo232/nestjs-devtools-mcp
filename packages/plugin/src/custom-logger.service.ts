@@ -1,5 +1,5 @@
-import { Injectable, ConsoleLogger, LoggerService } from '@nestjs/common';
-import { LogBufferService } from './log-buffer.service';
+import { Injectable, ConsoleLogger, LoggerService } from '@nestjs/common'
+import { LogBufferService } from './log-buffer.service'
 
 /**
  * CustomLoggerService replaces the default NestJS Logger to:
@@ -12,7 +12,7 @@ export class CustomLoggerService extends ConsoleLogger implements LoggerService 
     private readonly bufferService: LogBufferService,
     context?: string,
   ) {
-    super(context || 'App');
+    super(context || 'App')
   }
 
   /**
@@ -23,8 +23,8 @@ export class CustomLoggerService extends ConsoleLogger implements LoggerService 
       level: 'log',
       message: this.formatMyMessage(message),
       context: context || this.context,
-    });
-    super.log(message, context || '');
+    })
+    super.log(message, context || '')
   }
 
   /**
@@ -36,8 +36,8 @@ export class CustomLoggerService extends ConsoleLogger implements LoggerService 
       message: this.formatMyMessage(message),
       context: context || this.context,
       trace,
-    });
-    super.error(message, trace || '', context || '');
+    })
+    super.error(message, trace || '', context || '')
   }
 
   /**
@@ -48,8 +48,8 @@ export class CustomLoggerService extends ConsoleLogger implements LoggerService 
       level: 'warn',
       message: this.formatMyMessage(message),
       context: context || this.context,
-    });
-    super.warn(message, context || '');
+    })
+    super.warn(message, context || '')
   }
 
   /**
@@ -60,8 +60,8 @@ export class CustomLoggerService extends ConsoleLogger implements LoggerService 
       level: 'debug',
       message: this.formatMyMessage(message),
       context: context || this.context,
-    });
-    super.debug(message, context || '');
+    })
+    super.debug(message, context || '')
   }
 
   /**
@@ -72,8 +72,8 @@ export class CustomLoggerService extends ConsoleLogger implements LoggerService 
       level: 'verbose',
       message: this.formatMyMessage(message),
       context: context || this.context,
-    });
-    super.verbose(message, context || '');
+    })
+    super.verbose(message, context || '')
   }
 
   /**
@@ -82,11 +82,11 @@ export class CustomLoggerService extends ConsoleLogger implements LoggerService 
   private formatMyMessage(message: unknown): string {
     if (typeof message === 'object') {
       try {
-        return JSON.stringify(message);
+        return JSON.stringify(message)
       } catch {
-        return String(message);
+        return String(message)
       }
     }
-    return String(message);
+    return String(message)
   }
 }

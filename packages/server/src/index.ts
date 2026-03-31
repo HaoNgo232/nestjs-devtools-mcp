@@ -1,13 +1,10 @@
 #!/usr/bin/env node
-import { Server } from '@modelcontextprotocol/sdk/server/index.js';
-import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
-import {
-  CallToolRequestSchema,
-  ListToolsRequestSchema,
-} from '@modelcontextprotocol/sdk/types.js';
-import { z } from 'zod';
-import { discoverServers } from './discovery.js';
-import { DevToolsProxy } from './proxy.js';
+import { Server } from '@modelcontextprotocol/sdk/server/index.js'
+import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js'
+import { CallToolRequestSchema, ListToolsRequestSchema } from '@modelcontextprotocol/sdk/types.js'
+import { z } from 'zod'
+import { discoverServers } from './discovery.js'
+import { DevToolsProxy } from './proxy.js'
 
 /**
  * NestJS DevTools MCP - Bridge launched via STDIO transport.
@@ -22,10 +19,10 @@ const server = new Server(
     capabilities: {
       tools: {},
     },
-  }
-);
+  },
+)
 
-const devtoolsProxy = new DevToolsProxy();
+const devtoolsProxy = new DevToolsProxy()
 
 /**
  * Register the list of available tools for the AI Client.
@@ -64,22 +61,22 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
         },
       },
     ],
-  };
-});
+  }
+})
 
 /**
  * Handle Tool Call requests from the AI Client and proxy/execute bridge logic.
  */
 server.setRequestHandler(CallToolRequestSchema, async (request) => {
-  const { name, arguments: args } = request.params;
+  const { name, arguments: args } = request.params
 
   try {
     switch (name) {
       case 'discover_servers': {
-        const servers = await discoverServers();
+        const servers = await discoverServers()
         return {
           content: [{ type: 'text', text: JSON.stringify(servers, null, 2) }],
-        };
+        }
       }
 
       case 'get_logs': {
@@ -87,42 +84,42 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           port: z.number().optional(),
           lines: z.number().optional(),
           level: z.string().optional(),
-        });
-        const parsed = schema.parse(args || {});
-        
-        const targetPort = await devtoolsProxy.resolvePort(parsed.port);
+        })
+        const parsed = schema.parse(args || {})
+
+        const targetPort = await devtoolsProxy.resolvePort(parsed.port)
         const logData = await devtoolsProxy.callPluginTool(targetPort, 'get_logs', {
           lines: parsed.lines,
           level: parsed.level,
-        });
+        })
 
         return {
           content: [{ type: 'text', text: JSON.stringify(logData, null, 2) }],
-        };
+        }
       }
 
       default:
-        throw new Error(`Tool not supported: ${name}`);
+        throw new Error(`Tool not supported: ${name}`)
     }
   } catch (error: unknown) {
-    const errorMessage = error instanceof Error ? error.message : String(error);
+    const errorMessage = error instanceof Error ? error.message : String(error)
     return {
       content: [{ type: 'text', text: errorMessage }],
       isError: true,
-    };
+    }
   }
-});
+})
 
 /**
  * Initialize transport and start listening to STDIO.
  */
 async function main() {
-  const transport = new StdioServerTransport();
-  await server.connect(transport);
-  console.error('NestJS DevTools MCP Bridge has started and is listening on STDIO.');
+  const transport = new StdioServerTransport()
+  await server.connect(transport)
+  console.error('NestJS DevTools MCP Bridge has started and is listening on STDIO.')
 }
 
 main().catch((err) => {
-  console.error('Critical error during NestJS DevTools bridge launch:', err);
-  process.exit(1);
-});
+  console.error('Critical error during NestJS DevTools bridge launch:', err)
+  process.exit(1)
+})

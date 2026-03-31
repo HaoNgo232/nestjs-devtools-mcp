@@ -1,10 +1,10 @@
 export interface NestServerInfo {
-  port: number;
-  pid: number;
-  name: string;
-  version: string;
-  uptime: number;
-  healthUrl: string;
+  port: number
+  pid: number
+  name: string
+  version: string
+  uptime: number
+  healthUrl: string
 }
 
 /**
@@ -13,22 +13,22 @@ export interface NestServerInfo {
  * @param endPort Ending port for scanning.
  */
 export async function discoverServers(startPort = 3000, endPort = 3010): Promise<NestServerInfo[]> {
-  const servers: NestServerInfo[] = [];
-  const ports = Array.from({ length: endPort - startPort + 1 }, (_, i) => startPort + i);
+  const servers: NestServerInfo[] = []
+  const ports = Array.from({ length: endPort - startPort + 1 }, (_, i) => startPort + i)
 
   // Scan ports in parallel to increase performance
   const results = await Promise.allSettled(
     ports.map(async (port) => {
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 600); // Short timeout for scanning
+      const controller = new AbortController()
+      const timeoutId = setTimeout(() => controller.abort(), 600) // Short timeout for scanning
 
       try {
         const response = await fetch(`http://localhost:${port}/_dev/mcp/health`, {
           signal: controller.signal,
-        });
+        })
 
         if (response.ok) {
-          const data = await response.json();
+          const data = await response.json()
           if (data.name === 'nestjs-devtools-mcp') {
             return {
               port,
@@ -37,23 +37,23 @@ export async function discoverServers(startPort = 3000, endPort = 3010): Promise
               version: data.version,
               uptime: data.uptime,
               healthUrl: `http://localhost:${port}/_dev/mcp/health`,
-            };
+            }
           }
         }
-      } catch (err) {
+      } catch (_err) {
         // Ignored
       } finally {
-        clearTimeout(timeoutId);
+        clearTimeout(timeoutId)
       }
-      return null;
-    })
-  );
+      return null
+    }),
+  )
 
   for (const res of results) {
     if (res.status === 'fulfilled' && res.value) {
-      servers.push(res.value);
+      servers.push(res.value)
     }
   }
 
-  return servers;
+  return servers
 }

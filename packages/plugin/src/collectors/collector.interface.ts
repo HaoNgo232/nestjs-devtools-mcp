@@ -4,10 +4,10 @@
  */
 export interface CollectorResult<T = Record<string, unknown>> {
   /** Tên tool MCP tương ứng, ví dụ: "get_logs", "get_routes" */
-  readonly toolName: string;
+  readonly toolName: string
 
   /** Payload dữ liệu runtime */
-  readonly data: T;
+  readonly data: T
 }
 
 /**
@@ -34,17 +34,17 @@ export interface CollectorResult<T = Record<string, unknown>> {
  */
 export interface DevtoolsCollector<T = Record<string, unknown>> {
   /** Identifier duy nhất — map 1:1 với MCP tool name phía bridge */
-  readonly toolName: string;
+  readonly toolName: string
 
   /** Mô tả ngắn cho AI client biết tool này làm gì */
-  readonly description: string;
+  readonly description: string
 
   /**
    * Thu thập dữ liệu runtime.
    * @param params - Tham số tuỳ chọn từ request body (đã validate bởi controller/guard).
    * @returns CollectorResult chứa data đã sẵn sàng serialize.
    */
-  execute(params: Record<string, unknown>): CollectorResult<T> | Promise<CollectorResult<T>>;
+  execute(params: Record<string, unknown>): CollectorResult<T> | Promise<CollectorResult<T>>
 }
 
 /**
@@ -55,4 +55,4 @@ export interface DevtoolsCollector<T = Record<string, unknown>> {
  * { provide: DEVTOOLS_COLLECTORS, useClass: LogCollector, multi: true }
  * ```
  */
-export const DEVTOOLS_COLLECTORS = Symbol('DEVTOOLS_COLLECTORS');
+export const DEVTOOLS_COLLECTORS = Symbol('DEVTOOLS_COLLECTORS')

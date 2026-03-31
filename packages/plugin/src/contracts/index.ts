@@ -1,1 +1,1 @@
-export * from './mcp-api.contract';
+export * from './mcp-api.contract'

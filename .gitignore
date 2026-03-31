@@ -5,6 +5,7 @@
 /node_modules
 /build
 /demo-app/node_modules
+/demo-app/dist
 
 # Logs
 logs

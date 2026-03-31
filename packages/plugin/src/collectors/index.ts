@@ -1,1 +1,1 @@
-export * from './collector.interface';
+export * from './collector.interface'

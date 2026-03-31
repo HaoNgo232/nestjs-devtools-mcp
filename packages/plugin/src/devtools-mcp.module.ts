@@ -1,10 +1,10 @@
-import { Module, DynamicModule, Global, Logger } from '@nestjs/common';
-import { DEVTOOLS_OPTIONS_TOKEN, DevtoolsMcpOptions } from './devtools-mcp.options';
-import { LogBufferService } from './log-buffer.service';
-import { CustomLoggerService } from './custom-logger.service';
-import { DevtoolsMcpController } from './devtools-mcp.controller';
-import { DEVTOOLS_COLLECTORS } from './collectors/collector.interface';
-import { LogCollector } from './collectors/log.collector';
+import { Module, DynamicModule, Global, Logger } from '@nestjs/common'
+import { DEVTOOLS_OPTIONS_TOKEN, DevtoolsMcpOptions } from './devtools-mcp.options'
+import { LogBufferService } from './log-buffer.service'
+import { CustomLoggerService } from './custom-logger.service'
+import { DevtoolsMcpController } from './devtools-mcp.controller'
+import { DEVTOOLS_COLLECTORS } from './collectors/collector.interface'
+import { LogCollector } from './collectors/log.collector'
 
 /**
  * DevtoolsMcpModule is designed to be embedded in a NestJS App.
@@ -13,7 +13,7 @@ import { LogCollector } from './collectors/log.collector';
 @Global()
 @Module({})
 export class DevtoolsMcpModule {
-  private static readonly logger = new Logger('DevtoolsMcp');
+  private static readonly logger = new Logger('DevtoolsMcp')
 
   /**
    * Dynamic module registration method, allowing flexible configuration.
@@ -25,15 +25,15 @@ export class DevtoolsMcpModule {
       disabled: process.env.NODE_ENV === 'production',
       logBufferSize: 500,
       ...options,
-    };
+    }
 
     if (defaultOptions.disabled) {
       return {
         module: DevtoolsMcpModule,
-      };
+      }
     }
 
-    this.logger.log(`DevTools MCP endpoint initialized at ${defaultOptions.endpoint}`);
+    this.logger.log(`DevTools MCP endpoint initialized at ${defaultOptions.endpoint}`)
 
     return {
       module: DevtoolsMcpModule,
@@ -46,7 +46,7 @@ export class DevtoolsMcpModule {
         {
           provide: CustomLoggerService,
           useFactory: (bufferService: LogBufferService) => {
-            return new CustomLoggerService(bufferService);
+            return new CustomLoggerService(bufferService)
           },
           inject: [LogBufferService],
         },
@@ -55,10 +55,11 @@ export class DevtoolsMcpModule {
           provide: DEVTOOLS_COLLECTORS,
           useClass: LogCollector,
           multi: true,
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
         } as any,
       ],
       controllers: [DevtoolsMcpController],
       exports: [LogBufferService, CustomLoggerService],
-    };
+    }
   }
 }

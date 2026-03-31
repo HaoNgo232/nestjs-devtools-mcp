@@ -5,16 +5,23 @@
   "scripts": {
     "build": "npm run build --workspaces",
     "test": "npm run test --workspaces",
-    "lint": "eslint \"**/*.ts\""
+    "lint": "eslint \"**/*.ts\" --config eslint.config.mjs",
+    "format": "prettier --write \"**/*.ts\""
   },
   "workspaces": [
     "packages/*",
     "demo-app"
   ],
   "devDependencies": {
+    "@eslint/js": "^10.0.1",
     "@typescript-eslint/eslint-plugin": "^8.58.0",
     "@typescript-eslint/parser": "^8.58.0",
     "eslint": "^10.1.0",
-    "typescript": "^5.0.0"
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-prettier": "^5.5.5",
+    "globals": "^17.4.0",
+    "prettier": "^3.8.1",
+    "typescript": "^5.0.0",
+    "typescript-eslint": "^8.58.0"
   }
 }

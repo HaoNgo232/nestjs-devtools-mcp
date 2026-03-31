@@ -1,8 +1,8 @@
-import { Controller, Get, Post, Body, UseGuards, Param, Inject, NotFoundException } from '@nestjs/common';
-import { LocalhostOnlyGuard } from './localhost-only.guard';
-import { DEVTOOLS_OPTIONS_TOKEN, DevtoolsMcpOptions } from './devtools-mcp.options';
-import { DEVTOOLS_COLLECTORS, DevtoolsCollector } from './collectors/collector.interface';
-import { McpHealthResponse } from './contracts/mcp-api.contract';
+import { Controller, Get, Post, Body, UseGuards, Param, Inject, NotFoundException } from '@nestjs/common'
+import { LocalhostOnlyGuard } from './localhost-only.guard'
+import { DEVTOOLS_OPTIONS_TOKEN, DevtoolsMcpOptions } from './devtools-mcp.options'
+import { DEVTOOLS_COLLECTORS, DevtoolsCollector } from './collectors/collector.interface'
+import { McpHealthResponse } from './contracts/mcp-api.contract'
 
 /**
  * This Controller exposes the necessary HTTP endpoints for the bridge to collect runtime information.
@@ -12,7 +12,7 @@ import { McpHealthResponse } from './contracts/mcp-api.contract';
 @Controller('_dev/mcp')
 @UseGuards(LocalhostOnlyGuard)
 export class DevtoolsMcpController {
-  private readonly version = '0.1.0';
+  private readonly version = '0.1.0'
 
   constructor(
     @Inject(DEVTOOLS_OPTIONS_TOKEN)
@@ -27,15 +27,18 @@ export class DevtoolsMcpController {
    */
   @Get('health')
   getHealth(): McpHealthResponse {
+    const collectorsArray = Array.isArray(this.collectors) ? this.collectors : [this.collectors]
+    const tools = collectorsArray.filter((c) => c && c.toolName).map((c) => c.toolName)
+
     return {
       status: 'ok',
       module: 'nestjs-devtools-mcp', // Required by contract
-      name: 'nestjs-devtools-mcp',   // Used by bridge discovery
+      name: 'nestjs-devtools-mcp', // Used by bridge discovery
       timestamp: new Date().toISOString(),
-      tools: this.collectors.map(c => c.toolName),
+      tools,
       pid: process.pid,
       uptime: Math.floor(process.uptime()),
-    };
+    }
   }
 
   /**
@@ -45,17 +48,15 @@ export class DevtoolsMcpController {
    * @param body Request parameters for the tool
    */
   @Post('tools/:toolName')
-  async handleTool(
-    @Param('toolName') toolName: string,
-    @Body() body: Record<string, unknown>,
-  ) {
-    const collector = this.collectors.find(c => c.toolName === toolName);
-    
+  async handleTool(@Param('toolName') toolName: string, @Body() body: Record<string, unknown>) {
+    const collectorsArray = Array.isArray(this.collectors) ? this.collectors : [this.collectors]
+    const collector = collectorsArray.find((c) => c && c.toolName === toolName)
+
     if (!collector) {
-      throw new NotFoundException(`Tool '${toolName}' not found or not registered.`);
+      throw new NotFoundException(`Tool '${toolName}' not found.`)
     }
 
-    const result = await collector.execute(body);
-    return result.data;
+    const result = await collector.execute(body)
+    return result.data
   }
 }
