@@ -22,23 +22,15 @@ If you are contributing to this project or want to use the latest unreleased fea
 First, clone the repository and build both the plugin and the server packages:
 ```bash
 cd /path/to/nestjs-devtools-mcp
-# Using npm
-npm install && npm run build --workspaces
-
-# Using pnpm (Recommended for monorepos)
-pnpm install && pnpm run build
+pnpm install && pnpm build
 ```
 
 ### Step 2: Link the Plugin to your NestJS App
 In your target NestJS application's root directory, install the plugin using the absolute path to its folder:
 ```bash
-# Using npm
-npm install /home/user/projects/nestjs-devtools-mcp/packages/plugin
-
-# Using pnpm
-pnpm add /home/user/projects/nestjs-devtools-mcp/packages/plugin
+pnpm add /path/to/nestjs-devtools-mcp/packages/plugin
 ```
-*Note: This creates a direct dependency on your local build of the plugin.*
+This creates a direct dependency on your local build of the plugin.
 
 ### Step 3: Register the Module (Standard)
 ```typescript
@@ -67,6 +59,6 @@ Instead of using `npx`, point your MCP client directly to the compiled entry poi
 
 ## Troubleshooting & Notes
 
-- **Port Range**: The Bridge CLI automatically scans ports `3000-3010`. If your NestJS app runs on a different port, ensure it falls within this range or wait for the `--port` configuration update in Phase 2.
+- **Port Range**: The Bridge CLI automatically scans ports `3000-3010`. If your NestJS app runs on a different port, ensure it falls within this range. Custom port configuration may be supported in a future release.
 - **Security Check**: The plugin only allows connections from `127.0.0.1` and `::1`. If you are running inside a container, ensure the network mode is `host` or the bridge IP is correctly mapped (refer to `LocalhostOnlyGuard` for implementation details).
 - **Production Mode**: The plugin is disabled by default if `NODE_ENV === 'production'`. To force enable it (not recommended), use `DevtoolsMcpModule.register({ disabled: false })`.

@@ -4,7 +4,7 @@ This guide describes the workflow for developing, testing, and publishing the **
 
 ## Project Structure
 
-The project is a Monorepo using NPM Workspaces:
+The project is a monorepo managed by **pnpm workspaces**:
 - `packages/plugin`: The `@nestjs-devtools-mcp/plugin` package (NestJS module).
 - `packages/server`: The `nestjs-devtools-mcp` bridge package (MCP Server CLI).
 - `demo-app`: A sample NestJS application used for end-to-end testing.
@@ -14,50 +14,50 @@ The project is a Monorepo using NPM Workspaces:
 ### 1. Initial Setup
 Clone the repository and install dependencies at the root:
 ```bash
-npm install
+pnpm install
 ```
 
 ### 2. Standard Development Loop
 Modify files in `src`, then build all workspaces:
 ```bash
-# Build all packages and the demo app
-npm run build --workspaces
+# Build all packages
+pnpm build
 ```
 
 ### 3. Testing Changes
-Run unit and integration tests with coverage:
+Run unit and integration tests:
 ```bash
-# Run tests for everything
-npm run test --workspaces
+# Run tests for all packages
+pnpm test
 
 # Run with coverage report for the plugin
-cd packages/plugin && npm test -- --coverage
+cd packages/plugin && pnpm test -- --coverage
 ```
 
 ### 4. Code Quality (Linting & Formatting)
-We strictly enforce 100% clean lint and Prettier formatting:
+We strictly enforce clean lint and Prettier formatting:
 ```bash
 # Run formatter
-npm run format
+pnpm run format
 
 # Run linter
-npm run lint
+pnpm run lint
 ```
 
 ### 5. Pre-push Check (CI Simulation)
-Before pushing to GitHub, always run the CI script at the root to ensure everything is perfect:
+Before pushing to GitHub, always run the full CI script at the root:
 ```bash
 # Formats code, lints, builds, and runs all tests
-npm run ci
+pnpm run ci
 ```
 
 ### 6. Manual Testing with Demo App
 To see your changes in a real NestJS application:
 1. Open a terminal and start the demo app:
 ```bash
-cd demo-app && npm start
+cd demo-app && pnpm start
 ```
-2. In another terminal, perform an HTTP call to the plugin:
+2. In another terminal, verify the plugin is responding:
 ```bash
 curl http://localhost:3000/_dev/mcp/health
 ```
@@ -66,43 +66,37 @@ curl http://localhost:3000/_dev/mcp/health
 
 ## Deployment & Publishing
 
-### 1. Versioning
-We use semantic versioning. Update the version from the root:
-```bash
-# Updates version across all packages
-npm version patch # or minor/major
-```
-
-### 2. CI/CD Publishing (Recommended)
-Our GitHub Actions workflow is set up to automatically build, test, and publish to NPM when you push a new version tag.
+### 1. CI/CD Publishing (Recommended)
+Our GitHub Actions workflow automatically builds, tests, and publishes to NPM when you push a version tag. This is the primary release method.
 
 1. Create a version tag:
 ```bash
-# Example: Create tag v0.1.3
-git tag v0.1.3
+git tag v0.1.4
 ```
 
 2. Push the tag to GitHub:
 ```bash
-git push origin v0.1.3
+git push origin v0.1.4
 ```
 
-GitHub Actions will pick up the `v*` tag, verify the build, and publish both `@nestjs-devtools-mcp/plugin` and `nestjs-devtools-mcp` automatically.
+The `release.yml` workflow will pick up the `v*` tag, extract the version string (e.g., `v0.1.4` → `0.1.4`), inject it into both `packages/plugin/package.json` and `packages/server/package.json`, build the monorepo, then publish both packages to NPM.
 
-### 3. Manual Publishing to NPM (Optional)
-If you prefer manual publishing:
+> **Note:** You do not need to manually update the `version` field in any `package.json`. The release workflow handles this automatically from the git tag.
+
+### 2. Manual Publishing to NPM (Optional)
+If you prefer manual publishing, update the version in both package.json files first, then:
 
 **Package A: Plugin**
 ```bash
 cd packages/plugin
-npm run build
+pnpm build
 npm publish --access public
 ```
 
 **Package B: Bridge (CLI)**
 ```bash
 cd packages/server
-npm run build
+pnpm build
 npm publish --access public
 ```
 
@@ -110,12 +104,14 @@ npm publish --access public
 If you want to test the package in another local project without publishing:
 ```bash
 # In your target project
-npm install /path/to/nestjs-devtools-mcp/packages/plugin
+pnpm add /path/to/nestjs-devtools-mcp/packages/plugin
 ```
+
+---
 
 ## Architectural Principles
 
 1. **Zero-Config First**: Every feature must work with default settings.
 2. **Transparent Log Forwarding**: The plugin must never interfere with the original NestJS console output.
-3. **100% Coverage**: All new logic must be fully tested before merging.
-4. **Localhost Only**: The plugin controller must explicitly reject any non-localhost requests via the `LocalhostOnlyGuard`.
+3. **Localhost Only**: The plugin controller must explicitly reject any non-localhost requests via the `LocalhostOnlyGuard`.
+4. **Full Test Coverage**: All new logic should be fully tested before merging.
