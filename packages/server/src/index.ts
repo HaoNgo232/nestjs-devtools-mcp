@@ -6,6 +6,8 @@ import { z } from 'zod'
 import { discoverServers } from './discovery.js'
 import { DevToolsProxy } from './proxy.js'
 
+import * as pkg from '../package.json'
+
 /**
  * NestJS DevTools MCP - Bridge launched via STDIO transport.
  * AI Client will spawn this process to interact with the NestJS App.
@@ -13,7 +15,7 @@ import { DevToolsProxy } from './proxy.js'
 const server = new Server(
   {
     name: 'nestjs-devtools-mcp',
-    version: '0.1.3',
+    version: pkg.version,
   },
   {
     capabilities: {

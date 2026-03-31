@@ -9,10 +9,13 @@ import { McpHealthResponse } from './contracts/mcp-api.contract'
  * It uses a generic dispatch mechanism to delegate tool execution to registered collectors.
  * The default endpoint path is /_dev/mcp
  */
+import * as pkg from '../package.json';
+
 @Controller('_dev/mcp')
 @UseGuards(LocalhostOnlyGuard)
 export class DevtoolsMcpController {
-  private readonly version = '0.1.3'
+  // Get version from package.json - Tự động lấy version từ package.json
+  private readonly version = pkg.version;
 
   constructor(
     @Inject(DEVTOOLS_OPTIONS_TOKEN)
