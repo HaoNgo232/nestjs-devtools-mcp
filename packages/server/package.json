@@ -1,0 +1,21 @@
+{
+  "name": "nestjs-devtools-mcp",
+  "version": "0.1.0",
+  "description": "Bridge between AI client and NestJS application via MCP protocol",
+  "main": "dist/index.js",
+  "bin": {
+    "nestjs-devtools-mcp": "./dist/index.js"
+  },
+  "files": ["dist"],
+  "scripts": {
+    "build": "tsc && chmod +x dist/index.js"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.x",
+    "zod": "^3.x"
+  },
+  "devDependencies": {
+    "typescript": "^5.0.0",
+    "@types/node": "^20.0.0"
+  }
+}
