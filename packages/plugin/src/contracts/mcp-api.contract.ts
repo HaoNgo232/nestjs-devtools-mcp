@@ -38,6 +38,20 @@ export interface McpGetLogsResponse {
   readonly logs: ReadonlyArray<McpLogEntry>
 }
 
+/** Route information returned by get_routes tool */
+export interface McpRouteInfo {
+  readonly method: string
+  readonly path: string
+  readonly controllerName: string
+  readonly handlerName: string
+}
+
+/** POST /_dev/mcp/tools/get_routes — Response body */
+export interface McpGetRoutesResponse {
+  readonly routes: ReadonlyArray<McpRouteInfo>
+  readonly total: number
+}
+
 /** Common error envelope for all endpoints when an exception occurs */
 export interface McpErrorResponse {
   readonly error: string

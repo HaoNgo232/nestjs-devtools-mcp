@@ -1,5 +1,6 @@
 import { Module, Logger } from '@nestjs/common'
 import { DevtoolsMcpModule } from '@nestjs-devtools-mcp/plugin'
+import { UserController } from './user.controller'
 
 /**
  * AppModule for the demo application.
@@ -7,6 +8,7 @@ import { DevtoolsMcpModule } from '@nestjs-devtools-mcp/plugin'
  */
 @Module({
   imports: [DevtoolsMcpModule.register()],
+  controllers: [UserController],
 })
 export class AppModule {
   private readonly logger = new Logger('DemoApp')

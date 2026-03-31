@@ -1,10 +1,12 @@
 import { Module, DynamicModule, Global, Logger } from '@nestjs/common'
+import { DiscoveryModule } from '@nestjs/core'
 import { DEVTOOLS_OPTIONS_TOKEN, DevtoolsMcpOptions } from './devtools-mcp.options'
 import { LogBufferService } from './log-buffer.service'
 import { CustomLoggerService } from './custom-logger.service'
 import { DevtoolsMcpController } from './devtools-mcp.controller'
-import { DEVTOOLS_COLLECTORS } from './collectors/collector.interface'
+import { DEVTOOLS_COLLECTORS, DevtoolsCollector } from './collectors/collector.interface'
 import { LogCollector } from './collectors/log.collector'
+import { RouteCollector } from './collectors/route.collector'
 
 /**
  * DevtoolsMcpModule is designed to be embedded in a NestJS App.
@@ -37,6 +39,7 @@ export class DevtoolsMcpModule {
 
     return {
       module: DevtoolsMcpModule,
+      imports: [DiscoveryModule],
       providers: [
         {
           provide: DEVTOOLS_OPTIONS_TOKEN,
@@ -50,13 +53,17 @@ export class DevtoolsMcpModule {
           },
           inject: [LogBufferService],
         },
-        LogCollector, // Standard provider registration
+        LogCollector,
+        RouteCollector,
+        /**
+         * Register collectors using factory to ensure they are always provided as an array.
+         * Đăng ký các collector qua factory để đảm bảo chúng luôn được cung cấp dưới dạng mảng.
+         */
         {
           provide: DEVTOOLS_COLLECTORS,
-          useClass: LogCollector,
-          multi: true,
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        } as any,
+          useFactory: (...collectors: DevtoolsCollector[]) => collectors,
+          inject: [LogCollector, RouteCollector],
+        },
       ],
       controllers: [DevtoolsMcpController],
       exports: [LogBufferService, CustomLoggerService],

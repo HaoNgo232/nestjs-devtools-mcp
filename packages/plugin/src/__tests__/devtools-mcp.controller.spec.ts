@@ -131,5 +131,12 @@ describe('DevtoolsMcpController', () => {
       const result = await ctrl.handleTool('get_logs', {})
       expect(result).toEqual({ entries: [], total: 0, bufferSize: 500 })
     })
+
+    it('should filter out invalid collectors in health check', () => {
+      const mixedCollectors = [mockCollectors[0], null, { toolName: '' }]
+      const ctrl = new DevtoolsMcpController(defaultOptions, mixedCollectors as any)
+      const health = ctrl.getHealth()
+      expect(health.tools).toEqual(['get_logs'])
+    })
   })
 })

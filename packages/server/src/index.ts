@@ -61,6 +61,20 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
           },
         },
       },
+      {
+        name: 'get_routes',
+        description:
+          'List all registered HTTP routes in the NestJS application with their methods, paths, controllers and handler names.',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            port: {
+              type: 'number',
+              description: 'NestJS server port. Auto-detected if only one server is running.',
+            },
+          },
+        },
+      },
     ],
   }
 })
@@ -96,6 +110,20 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
 
         return {
           content: [{ type: 'text', text: JSON.stringify(logData, null, 2) }],
+        }
+      }
+
+      case 'get_routes': {
+        const schema = z.object({
+          port: z.number().optional(),
+        })
+        const parsed = schema.parse(args || {})
+
+        const targetPort = await devtoolsProxy.resolvePort(parsed.port)
+        const routeData = await devtoolsProxy.callPluginTool(targetPort, 'get_routes', {})
+
+        return {
+          content: [{ type: 'text', text: JSON.stringify(routeData, null, 2) }],
         }
       }
 

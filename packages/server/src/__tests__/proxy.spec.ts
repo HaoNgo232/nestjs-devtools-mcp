@@ -214,4 +214,51 @@ describe('DevToolsProxy.callPluginTool', () => {
       expect.objectContaining({ method: 'POST' }),
     )
   })
+
+  it('should call get_routes endpoint and return parsed route data', async () => {
+    // Arrange: mock response matching McpGetRoutesResponse shape
+    const routeData = {
+      routes: [
+        { method: 'GET', path: '/users', controllerName: 'UserController', handlerName: 'findAll' },
+        { method: 'POST', path: '/users', controllerName: 'UserController', handlerName: 'create' },
+      ],
+      total: 2,
+    }
+    mockFetch.mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: async () => routeData,
+    })
+    const proxy = new DevToolsProxy()
+
+    // Act
+    const result = await proxy.callPluginTool(3000, 'get_routes', {})
+
+    // Assert: correct URL
+    expect(mockFetch).toHaveBeenCalledWith('http://localhost:3000/_dev/mcp/tools/get_routes', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({}),
+    })
+
+    // Assert: correct data
+    expect(result).toEqual(routeData)
+  })
+
+  it('should send empty object body for get_routes with no params', async () => {
+    // Arrange
+    mockFetch.mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: async () => ({ routes: [], total: 0 }),
+    })
+    const proxy = new DevToolsProxy()
+
+    // Act
+    await proxy.callPluginTool(3000, 'get_routes')
+
+    // Assert: body is empty object
+    const callArgs = mockFetch.mock.calls[0]
+    expect(JSON.parse(callArgs[1].body)).toEqual({})
+  })
 })

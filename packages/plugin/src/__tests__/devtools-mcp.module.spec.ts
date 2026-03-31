@@ -45,16 +45,19 @@ describe('DevtoolsMcpModule (Integration)', () => {
       expect(collectors).toBeDefined()
     })
 
-    it('should include LogCollector in the collectors array with toolName "get_logs"', () => {
-      const collectors = module.get<unknown>(DEVTOOLS_COLLECTORS)
-      const logCollector = Array.isArray(collectors)
-        ? collectors.find((c: Record<string, unknown>) => (c as any).toolName === 'get_logs')
-        : (collectors as any)?.toolName === 'get_logs'
-          ? collectors
-          : undefined
+    it('should include LogCollector and RouteCollector in the collectors array', () => {
+      const controller = module.get<DevtoolsMcpController>(DevtoolsMcpController)
+      const collectors = (controller as any).collectors
+      expect(Array.isArray(collectors)).toBe(true)
+      expect(collectors.length).toBe(2)
+
+      const logCollector = (collectors as any[]).find((c) => c.toolName === 'get_logs')
+      const routeCollector = (collectors as any[]).find((c) => c.toolName === 'get_routes')
 
       expect(logCollector).toBeDefined()
-      expect((logCollector as any)?.description).toBeTruthy()
+      expect(logCollector.description).toBeTruthy()
+      expect(routeCollector).toBeDefined()
+      expect(routeCollector.description).toBeTruthy()
     })
 
     it('should register DevtoolsMcpController', () => {
@@ -68,13 +71,10 @@ describe('DevtoolsMcpModule (Integration)', () => {
       // Add a log via the shared buffer
       bufferService.add({ level: 'log', message: 'integration-test' })
 
-      // Retrieve via collector
-      const collectors = module.get<unknown>(DEVTOOLS_COLLECTORS)
-      const logCollector = Array.isArray(collectors)
-        ? collectors.find((c: Record<string, unknown>) => (c as any).toolName === 'get_logs')
-        : (collectors as any)?.toolName === 'get_logs'
-          ? collectors
-          : undefined
+      // Retrieve via collector through controller
+      const controller = module.get<DevtoolsMcpController>(DevtoolsMcpController)
+      const collectors = (controller as any).collectors
+      const logCollector = (collectors as any[]).find((c) => c.toolName === 'get_logs')
 
       if (!logCollector) {
         throw new Error('LogCollector not found')

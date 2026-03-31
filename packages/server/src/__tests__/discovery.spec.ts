@@ -225,4 +225,51 @@ describe('discoverServers', () => {
     expect(callArgs[0]).toBe('http://localhost:3000/_dev/mcp/health')
     expect(callArgs[1]).toHaveProperty('signal')
   })
+
+  // ─────────────────────────────────────────────────────
+  // PLATFORM & ERROR FALLBACKS (getListenPorts)
+  // ─────────────────────────────────────────────────────
+
+  describe('getListenPorts (Platform & Error Coverage)', () => {
+    let originalPlatform: string
+
+    beforeAll(() => {
+      originalPlatform = process.platform
+    })
+
+    afterAll(() => {
+      Object.defineProperty(process, 'platform', { value: originalPlatform })
+    })
+
+    const setPlatform = (platform: string) => {
+      Object.defineProperty(process, 'platform', { value: platform, configurable: true })
+    }
+
+    it('should use netstat on Windows', async () => {
+      setPlatform('win32')
+      mockExecSync.mockReturnValue('3000\n3001')
+
+      const result = await discoverServers(3000, 3000)
+      expect(mockExecSync).toHaveBeenCalledWith(expect.stringContaining('netstat'))
+    })
+
+    it('should return empty range when command execution fails', async () => {
+      setPlatform('linux')
+      mockExecSync.mockImplementation(() => {
+        throw new Error('command failed')
+      })
+
+      // Act: discoverServers still works because range scan is the fallback
+      const result = await discoverServers(3000, 3000)
+      // Check that fetch was still called for port 3000 from the range scan
+      expect(mockFetch).toHaveBeenCalledWith(expect.stringContaining(':3000'), expect.anything())
+    })
+
+    it('should return empty list when platform is unknown and no command exists', async () => {
+      setPlatform('unknown-os' as any)
+      // Discovery should proceed with range scan only
+      await discoverServers(3000, 3000)
+      expect(mockExecSync).not.toHaveBeenCalled()
+    })
+  })
 })
