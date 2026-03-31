@@ -1,0 +1,73 @@
+name: Automated Release (NPM)
+
+on:
+  push:
+    tags: ['v*']
+
+jobs:
+  publish:
+    name: Publish to NPM
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          registry-url: 'https://registry.npmjs.org'
+          cache: 'pnpm'
+
+      # ── Extract version từ git tag ──
+      - name: Extract version from tag
+        id: version
+        run: |
+          TAG_VERSION="${GITHUB_REF#refs/tags/v}"
+          echo "value=${TAG_VERSION}" >> "$GITHUB_OUTPUT"
+          echo "Publishing version: ${TAG_VERSION}"
+
+      # ── Inject version vào tất cả package.json trong monorepo ──
+      - name: Sync version
+        run: |
+          pnpm -r exec npm version "${{ steps.version.outputs.value }}" --no-git-tag-version --allow-same-version
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build monorepo
+        run: pnpm run build
+
+      - name: Test (Sanity check)
+        run: pnpm run test
+
+      # ── Publish cả hai package chính ──
+      - name: Publish @nestjs-devtools-mcp/plugin
+        working-directory: ./packages/plugin
+        run: pnpm publish --access public --no-git-checks
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Publish nestjs-devtools-mcp (Bridge)
+        working-directory: ./packages/server
+        run: pnpm publish --access public --no-git-checks
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      # ── Verify publish thành công ──
+      - name: Verify published versions
+        run: |
+          VERSION="${{ steps.version.outputs.value }}"
+          echo "Doi npm registry cap nhat..."
+          sleep 15
+          pnpm info "@nestjs-devtools-mcp/plugin" version | grep "${VERSION}"
+          pnpm info "nestjs-devtools-mcp" version | grep "${VERSION}"
+          echo "Release hoan tat!"
