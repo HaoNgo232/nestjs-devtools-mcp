@@ -63,7 +63,7 @@ jobs:
 
       # ── Chỉ build Plugin và Bridge để publish, bỏ qua demo-app ──
       - name: Build packages
-        run: pnpm run build --filter "@nestjs-devtools-mcp/plugin" --filter "nestjs-devtools-mcp"
+        run: pnpm --filter "@nestjs-devtools-mcp/plugin" --filter "nestjs-devtools-mcp" run build
 
       # ── Publish Plugin ──
       - name: Publish @nestjs-devtools-mcp/plugin
