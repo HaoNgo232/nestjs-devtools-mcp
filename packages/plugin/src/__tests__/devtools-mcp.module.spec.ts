@@ -9,6 +9,13 @@ import * as fs from 'fs'
 import * as path from 'path'
 
 jest.mock('fs')
+jest.mock('path', () => {
+  const original = jest.requireActual('path')
+  return {
+    ...original,
+    basename: jest.fn().mockImplementation(original.basename),
+  }
+})
 
 /**
  * Integration tests for DevtoolsMcpModule DI wiring.
@@ -193,7 +200,7 @@ describe('DevtoolsMcpModule (Integration)', () => {
     })
 
     it('should fallback to hardcoded default if path.basename throws', async () => {
-      const spy = jest.spyOn(path, 'basename').mockImplementation(() => {
+      const spy = (path.basename as jest.Mock).mockImplementationOnce(() => {
         throw new Error('path error')
       })
       mockExistsSync.mockReturnValue(false)
@@ -204,8 +211,6 @@ describe('DevtoolsMcpModule (Integration)', () => {
 
       const options = module.get<DevtoolsMcpOptions>(DEVTOOLS_OPTIONS_TOKEN)
       expect(options.name).toBe('nestjs-devtools-mcp') // Fallback cứng khi path lỗi - Hardcoded fallback on path error
-
-      spy.mockRestore()
     })
   })
 })

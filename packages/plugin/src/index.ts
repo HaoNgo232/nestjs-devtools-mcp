@@ -1,5 +1,5 @@
 /* istanbul ignore file */
-export * from './devtools-mcp.module.js'
+export * from './devtools-mcp.module'
 export * from './devtools-mcp.options'
 export * from './log-buffer.service'
 export * from './custom-logger.service'

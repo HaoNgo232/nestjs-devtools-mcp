@@ -48,7 +48,7 @@ importers:
   demo-app:
     dependencies:
       '@nestjs-devtools-mcp/plugin':
-        specifier: file:../packages/plugin
+        specifier: workspace:*
         version: link:../packages/plugin
       '@nestjs/common':
         specifier: ^11.1.17

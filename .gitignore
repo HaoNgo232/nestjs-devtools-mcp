@@ -10,6 +10,7 @@
 /build
 /demo-app/node_modules
 /demo-app/dist
+*.tsbuildinfo
 
 # Logs
 logs
