@@ -37,17 +37,20 @@ jobs:
           echo "value=${TAG_VERSION}" >> "$GITHUB_OUTPUT"
           echo "Publishing version: ${TAG_VERSION}"
 
-      # ── Inject version vào package.json (không dùng npm version để tránh lifecycle conflict) ──
+      # ── Inject version vào ALL package.json files ──
       - name: Sync version into package.json files
         run: |
           node -e "
             const fs = require('fs');
             const version = '${{ steps.version.outputs.value }}';
             const files = [
+              './package.json',
               './packages/plugin/package.json',
-              './packages/server/package.json'
+              './packages/server/package.json',
+              './demo-app/package.json'
             ];
             files.forEach(f => {
+              if (!fs.existsSync(f)) return;
               const pkg = JSON.parse(fs.readFileSync(f, 'utf8'));
               pkg.version = version;
               fs.writeFileSync(f, JSON.stringify(pkg, null, 2) + '\n');
@@ -56,11 +59,11 @@ jobs:
           "
 
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+        run: pnpm install
 
-      # ── Build sau khi sync version để đảm bảo dist có version đúng ──
-      - name: Build monorepo
-        run: pnpm build
+      # ── Chỉ build Plugin và Bridge để publish, bỏ qua demo-app ──
+      - name: Build packages
+        run: pnpm run build --filter "@nestjs-devtools-mcp/plugin" --filter "nestjs-devtools-mcp"
 
       # ── Publish Plugin ──
       - name: Publish @nestjs-devtools-mcp/plugin
