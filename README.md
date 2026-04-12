@@ -4,6 +4,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg?style=flat-square)](https://opensource.org/licenses/MIT)
 [![NestJS](https://img.shields.io/badge/NestJS-%23E0234E.svg?style=flat-square&logo=nestjs&logoColor=white)](https://nestjs.com/)
 [![MCP](https://img.shields.io/badge/MCP-Protocol-blue.svg?style=flat-square)](https://modelcontextprotocol.io/)
+[![MCP Badge](https://lobehub.com/badge/mcp/hao%20ngo232-nestjs-devtools-mcp)](https://lobehub.com/mcp/hao%20ngo232-nestjs-devtools-mcp)
 
 **Give your AI coding agents (Claude, Cursor, Copilot) the superpower to observe your NestJS application's runtime state in real-time.**
 
@@ -130,3 +131,13 @@ NestJS Runtime (Logger, Container, Routes)
 
 MIT © HaoNgo232.
 For production environments, always reassess security assumptions before deploying plugins that observe application state.
+
+## Marketplace Ownership Verification
+
+To improve trust signals in LobeHub MCP Marketplace and verify ownership:
+
+1. Keep the MCP badge in this README (already added above).
+2. Open your listing page: https://lobehub.com/mcp/hao%20ngo232-nestjs-devtools-mcp.
+3. Use the "Check Claim Status" flow and complete GitHub ownership verification.
+
+After LobeHub re-crawls the repository, the owner claim status should be updated on the score page.

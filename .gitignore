@@ -67,3 +67,4 @@ src/generated/
 dist/generated/
 test_output.txt
 .synapse/
+.codex

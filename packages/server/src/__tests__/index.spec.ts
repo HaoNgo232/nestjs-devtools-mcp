@@ -1,4 +1,11 @@
-import { CallToolRequestSchema, ListToolsRequestSchema } from '@modelcontextprotocol/sdk/types.js'
+import {
+  CallToolRequestSchema,
+  GetPromptRequestSchema,
+  ListPromptsRequestSchema,
+  ListResourcesRequestSchema,
+  ListToolsRequestSchema,
+  ReadResourceRequestSchema,
+} from '@modelcontextprotocol/sdk/types.js'
 import * as discovery from '../discovery'
 
 // Mock SDK before importing index.ts
@@ -20,6 +27,10 @@ jest.mock('../discovery')
 describe('MCP Bridge Entry Point (index.ts)', () => {
   let listToolsHandler: any
   let callToolHandler: any
+  let listPromptsHandler: any
+  let getPromptHandler: any
+  let listResourcesHandler: any
+  let readResourceHandler: any
 
   beforeAll(() => {
     // Capture the registered request handlers - Lấy các handler đã đăng ký để test
@@ -30,6 +41,14 @@ describe('MCP Bridge Entry Point (index.ts)', () => {
         listToolsHandler = call[1]
       } else if (call[0] === CallToolRequestSchema) {
         callToolHandler = call[1]
+      } else if (call[0] === ListPromptsRequestSchema) {
+        listPromptsHandler = call[1]
+      } else if (call[0] === GetPromptRequestSchema) {
+        getPromptHandler = call[1]
+      } else if (call[0] === ListResourcesRequestSchema) {
+        listResourcesHandler = call[1]
+      } else if (call[0] === ReadResourceRequestSchema) {
+        readResourceHandler = call[1]
       }
     }
   })
@@ -37,6 +56,10 @@ describe('MCP Bridge Entry Point (index.ts)', () => {
   it('should have registered tool handlers', () => {
     expect(listToolsHandler).toBeDefined()
     expect(callToolHandler).toBeDefined()
+    expect(listPromptsHandler).toBeDefined()
+    expect(getPromptHandler).toBeDefined()
+    expect(listResourcesHandler).toBeDefined()
+    expect(readResourceHandler).toBeDefined()
   })
 
   describe('List Tools Handler', () => {
@@ -46,6 +69,69 @@ describe('MCP Bridge Entry Point (index.ts)', () => {
       expect(result.tools.map((t: any) => t.name)).toContain('discover_servers')
       expect(result.tools.map((t: any) => t.name)).toContain('get_logs')
       expect(result.tools.map((t: any) => t.name)).toContain('get_routes')
+    })
+  })
+
+  describe('Prompt Handlers', () => {
+    it('should return available prompts', async () => {
+      const result = await listPromptsHandler()
+
+      expect(result.prompts).toHaveLength(1)
+      expect(result.prompts[0].name).toBe('install_nestjs_devtools_mcp')
+    })
+
+    it('should return quickstart prompt content', async () => {
+      const result = await getPromptHandler({
+        params: {
+          name: 'install_nestjs_devtools_mcp',
+        },
+      })
+
+      expect(result.messages).toHaveLength(1)
+      expect(result.messages[0].content.type).toBe('text')
+      expect(result.messages[0].content.text).toContain('npm install @nestjs-devtools-mcp/plugin')
+    })
+
+    it('should throw error for unsupported prompt', async () => {
+      await expect(
+        getPromptHandler({
+          params: {
+            name: 'invalid_prompt',
+          },
+        }),
+      ).rejects.toThrow('Prompt not supported: invalid_prompt')
+    })
+  })
+
+  describe('Resource Handlers', () => {
+    it('should return available resources', async () => {
+      const result = await listResourcesHandler()
+
+      expect(result.resources).toHaveLength(1)
+      expect(result.resources[0].uri).toBe('nestjs-devtools://runtime-guide')
+    })
+
+    it('should return runtime guide resource content', async () => {
+      const result = await readResourceHandler({
+        params: {
+          uri: 'nestjs-devtools://runtime-guide',
+        },
+      })
+
+      expect(result.contents).toHaveLength(1)
+      expect(result.contents[0].mimeType).toBe('application/json')
+      expect(result.contents[0].text).toContain('nestjs-devtools-mcp')
+      expect(result.contents[0].text).toContain('discover_servers')
+    })
+
+    it('should throw error for missing resource', async () => {
+      await expect(
+        readResourceHandler({
+          params: {
+            uri: 'nestjs-devtools://missing',
+          },
+        }),
+      ).rejects.toThrow('Resource not found: nestjs-devtools://missing')
     })
   })
 

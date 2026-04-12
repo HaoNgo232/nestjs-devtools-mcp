@@ -1,7 +1,14 @@
 #!/usr/bin/env node
 import { Server } from '@modelcontextprotocol/sdk/server/index.js'
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js'
-import { CallToolRequestSchema, ListToolsRequestSchema } from '@modelcontextprotocol/sdk/types.js'
+import {
+  CallToolRequestSchema,
+  GetPromptRequestSchema,
+  ListPromptsRequestSchema,
+  ListResourcesRequestSchema,
+  ListToolsRequestSchema,
+  ReadResourceRequestSchema,
+} from '@modelcontextprotocol/sdk/types.js'
 import { z } from 'zod'
 import { discoverServers } from './discovery.js'
 import { DevToolsProxy } from './proxy.js'
@@ -20,11 +27,39 @@ const server = new Server(
   {
     capabilities: {
       tools: {},
+      prompts: {},
+      resources: {},
     },
   },
 )
 
 const devtoolsProxy = new DevToolsProxy()
+
+const QUICKSTART_PROMPT_NAME = 'install_nestjs_devtools_mcp'
+const RUNTIME_GUIDE_URI = 'nestjs-devtools://runtime-guide'
+
+function buildRuntimeGuide() {
+  return {
+    project: 'nestjs-devtools-mcp',
+    purpose: 'Expose NestJS runtime state to AI tools via MCP with near-zero config.',
+    setup: {
+      plugin: {
+        package: '@nestjs-devtools-mcp/plugin',
+        moduleImport: 'DevtoolsMcpModule.register()',
+        loggerHook: 'applyDevtoolsLogger(app)',
+      },
+      mcpClient: {
+        command: 'npx',
+        args: ['-y', 'nestjs-devtools-mcp@latest'],
+      },
+    },
+    availableTools: ['discover_servers', 'get_logs', 'get_routes'],
+    security: {
+      localhostOnly: true,
+      defaultProductionBehavior: 'plugin disabled when NODE_ENV=production unless explicitly enabled',
+    },
+  }
+}
 
 /**
  * Register the list of available tools for the AI Client.
@@ -76,6 +111,88 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
             },
           },
         },
+      },
+    ],
+  }
+})
+
+server.setRequestHandler(ListPromptsRequestSchema, async () => {
+  return {
+    prompts: [
+      {
+        name: QUICKSTART_PROMPT_NAME,
+        title: 'Install NestJS DevTools MCP',
+        description: 'Step-by-step quickstart to connect a running NestJS app with this MCP bridge.',
+      },
+    ],
+  }
+})
+
+server.setRequestHandler(GetPromptRequestSchema, async (request) => {
+  const promptName = request.params.name
+
+  if (promptName !== QUICKSTART_PROMPT_NAME) {
+    throw new Error(`Prompt not supported: ${promptName}`)
+  }
+
+  return {
+    description: 'Quickstart guide for installing and connecting NestJS DevTools MCP.',
+    messages: [
+      {
+        role: 'user',
+        content: {
+          type: 'text',
+          text: [
+            'Install plugin in your NestJS project:',
+            'npm install @nestjs-devtools-mcp/plugin',
+            '',
+            'Register in app.module.ts:',
+            "import { DevtoolsMcpModule } from '@nestjs-devtools-mcp/plugin'",
+            'imports: [DevtoolsMcpModule.register()]',
+            '',
+            'Apply logger in main.ts:',
+            "import { applyDevtoolsLogger } from '@nestjs-devtools-mcp/plugin'",
+            'const app = await NestFactory.create(AppModule, { bufferLogs: true })',
+            'applyDevtoolsLogger(app)',
+            '',
+            'Configure MCP client:',
+            '{"command":"npx","args":["-y","nestjs-devtools-mcp@latest"]}',
+            '',
+            'Then call tools discover_servers, get_logs, and get_routes.',
+          ].join('\n'),
+        },
+      },
+    ],
+  }
+})
+
+server.setRequestHandler(ListResourcesRequestSchema, async () => {
+  return {
+    resources: [
+      {
+        uri: RUNTIME_GUIDE_URI,
+        name: 'nestjs_devtools_runtime_guide',
+        title: 'NestJS DevTools Runtime Guide',
+        description: 'Machine-readable runtime usage and setup guide for agents.',
+        mimeType: 'application/json',
+      },
+    ],
+  }
+})
+
+server.setRequestHandler(ReadResourceRequestSchema, async (request) => {
+  const { uri } = request.params
+
+  if (uri !== RUNTIME_GUIDE_URI) {
+    throw new Error(`Resource not found: ${uri}`)
+  }
+
+  return {
+    contents: [
+      {
+        uri: RUNTIME_GUIDE_URI,
+        mimeType: 'application/json',
+        text: JSON.stringify(buildRuntimeGuide(), null, 2),
       },
     ],
   }
