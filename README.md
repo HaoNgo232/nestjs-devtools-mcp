@@ -4,11 +4,12 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg?style=flat-square)](https://opensource.org/licenses/MIT)
 [![NestJS](https://img.shields.io/badge/NestJS-%23E0234E.svg?style=flat-square&logo=nestjs&logoColor=white)](https://nestjs.com/)
 [![MCP](https://img.shields.io/badge/MCP-Protocol-blue.svg?style=flat-square)](https://modelcontextprotocol.io/)
-[![MCP Badge](https://lobehub.com/badge/mcp/hao%20ngo232-nestjs-devtools-mcp)](https://lobehub.com/mcp/hao%20ngo232-nestjs-devtools-mcp)
+
+[![MCP Badge](https://lobehub.com/badge/mcp-full/hao%20ngo232-nestjs-devtools-mcp?theme=light)](https://lobehub.com/mcp/hao%20ngo232-nestjs-devtools-mcp)
 
 **Give your AI coding agents (Claude, Cursor, Copilot) the superpower to observe your NestJS application's runtime state in real-time.**
 
-Ever wished AI could see your crashed application logs, registered routes, or current DI container without you copy-pasting terminal outputs? This project provides a transparent, zero-config bridge between your running NestJS app and your AI tools via the Model Context Protocol (MCP).
+Ever wished AI could see your crashed application logs, registered routes, or current DI container without you copy-pasting terminal outputs? This project provides a transparent, near-zero config bridge between your running NestJS app and your AI tools via the Model Context Protocol (MCP).
 
 ---
 
