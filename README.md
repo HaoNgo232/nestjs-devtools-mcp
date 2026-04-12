@@ -18,6 +18,7 @@ Currently available tools:
 
 - `discover_servers` — Find local NestJS servers with the plugin enabled.
 - `get_logs` — Retrieve recent runtime logs from a detected NestJS server.
+- `get_routes` — List registered HTTP routes (method, path, controller, handler).
 
 More tools may be added in future releases.
 

@@ -25,19 +25,35 @@ Add the following entry to your `mcp_settings.json`:
 }
 ```
 
+## Available MCP Features
+
+### Tools
+
+- `discover_servers`: Scan localhost and list NestJS apps with plugin enabled.
+- `get_logs`: Fetch buffered runtime logs.
+- `get_routes`: Fetch registered HTTP routes.
+
+### Prompts
+
+- `install_nestjs_devtools_mcp`: Quickstart prompt for setting up plugin + MCP client config.
+
+### Resources
+
+- `nestjs-devtools://runtime-guide`: Machine-readable JSON runtime/setup guide.
+
 ## 🔌 How it Works
 
 The bridge automatically scans local ports (`3000-3010`) to find any running NestJS application that has the `@nestjs-devtools-mcp/plugin` installed. Once found, it proxies MCP tool calls over HTTP to the plugin.
 
-### Key Tools Provided:
-- `discover_servers`: List active NestJS apps with the plugin.
-- `get_logs`: Fetch latest logs from circular buffer.
-- `get_routes`: View all registered API endpoints (coming soon).
-
 ---
 
 ## 🛡️ Requirements
+
 - NestJS application must have `@nestjs-devtools-mcp/plugin` imported.
 - Bridge only connects to `localhost` endpoints for security.
+
+## License
+
+MIT
 
 For detailed documentation, visit the [Main README](https://github.com/HaoNgo232/nestjs-devtools-mcp).
