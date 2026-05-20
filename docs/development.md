@@ -66,25 +66,38 @@ curl http://localhost:3000/_dev/mcp/health
 
 ## Deployment & Publishing
 
-### 1. CI/CD Publishing (Recommended)
-Our GitHub Actions workflow automatically builds, tests, and publishes to NPM when you push a version tag. This is the primary release method.
+Since CI/CD workflows have been removed, publishing to NPM is done manually.
 
-1. Create a version tag:
+### 1. Syncing Version
+Before publishing, make sure to update the version across all `package.json` files in the monorepo. You can do this by running a quick node script or manually updating the `version` field in the following files:
+- `./package.json` (root)
+- `./packages/plugin/package.json`
+- `./packages/server/package.json`
+- `./demo-app/package.json`
+
+Example sync command (run from the root of the repository):
 ```bash
-git tag v0.1.4
+node -e "
+  const fs = require('fs');
+  const version = '0.2.0'; // Replace with your target version
+  const files = [
+    './package.json',
+    './packages/plugin/package.json',
+    './packages/server/package.json',
+    './demo-app/package.json'
+  ];
+  files.forEach(f => {
+    if (!fs.existsSync(f)) return;
+    const pkg = JSON.parse(fs.readFileSync(f, 'utf8'));
+    pkg.version = version;
+    fs.writeFileSync(f, JSON.stringify(pkg, null, 2) + '\n');
+    console.log('Updated', f, 'to v' + version);
+  });
+"
 ```
 
-2. Push the tag to GitHub:
-```bash
-git push origin v0.1.4
-```
-
-The `release.yml` workflow will pick up the `v*` tag, extract the version string (e.g., `v0.1.4` → `0.1.4`), inject it into both `packages/plugin/package.json` and `packages/server/package.json`, build the monorepo, then publish both packages to NPM.
-
-> **Note:** You do not need to manually update the `version` field in any `package.json`. The release workflow handles this automatically from the git tag.
-
-### 2. Manual Publishing to NPM (Optional)
-If you prefer manual publishing, update the version in both package.json files first, then:
+### 2. Publishing to NPM
+After syncing versions, build and publish both packages.
 
 **Package A: Plugin**
 ```bash

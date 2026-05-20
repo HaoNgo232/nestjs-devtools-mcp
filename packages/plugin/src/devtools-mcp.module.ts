@@ -1,5 +1,5 @@
 import { Module, DynamicModule, Global, Logger } from '@nestjs/common'
-import { DiscoveryModule } from '@nestjs/core'
+import { DiscoveryModule, Reflector } from '@nestjs/core'
 import * as fs from 'fs'
 import * as path from 'path'
 import { DEVTOOLS_OPTIONS_TOKEN, DevtoolsMcpOptions } from './devtools-mcp.options'
@@ -83,6 +83,7 @@ export class DevtoolsMcpModule {
         },
         LogCollector,
         RouteCollector,
+        Reflector,
         /**
          * Register collectors using factory to ensure they are always provided as an array.
          * Đăng ký các collector qua factory để đảm bảo chúng luôn được cung cấp dưới dạng mảng.
