@@ -32,6 +32,12 @@ Add the following entry to your `mcp_settings.json`:
 - `discover_servers`: Scan localhost and list NestJS apps with plugin enabled.
 - `get_logs`: Fetch buffered runtime logs.
 - `get_routes`: Fetch registered HTTP routes.
+- `get_request_history`: Fetch recent HTTP request history with filters for method, status, path, duration, and errors.
+- `get_config`: Fetch sanitized runtime configuration from environment variables and ConfigService.
+
+`get_request_history` is useful for checking whether frontend traffic reached the server, finding slow endpoints, and inspecting recent 4xx/5xx responses. The plugin excludes internal `/_dev/mcp/*` traffic from the history.
+
+`get_config` is read-only. Values that look like secrets are always returned as `***MASKED***`.
 
 ### Prompts
 
@@ -51,6 +57,8 @@ The bridge automatically scans local ports (`3000-3010`) to find any running Nes
 
 - NestJS application must have `@nestjs-devtools-mcp/plugin` imported.
 - Bridge only connects to `localhost` endpoints for security.
+- Request body capture is disabled by default in the plugin. Enable `captureRequestBody` only for local debugging; multipart bodies are never captured.
+- Config values that look like secrets are masked before they are returned by `get_config`.
 
 ## License
 

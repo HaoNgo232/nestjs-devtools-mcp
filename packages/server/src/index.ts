@@ -53,7 +53,7 @@ function buildRuntimeGuide() {
         args: ['-y', 'nestjs-devtools-mcp@latest'],
       },
     },
-    availableTools: ['discover_servers', 'get_logs', 'get_routes'],
+    availableTools: ['discover_servers', 'get_logs', 'get_routes', 'get_request_history', 'get_config'],
     security: {
       localhostOnly: true,
       defaultProductionBehavior: 'plugin disabled when NODE_ENV=production unless explicitly enabled',
@@ -112,6 +112,76 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
           },
         },
       },
+      {
+        name: 'get_request_history',
+        description:
+          'Get recent HTTP requests processed by the NestJS server. Useful for debugging API errors, slow endpoints, and verifying traffic.',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            port: {
+              type: 'number',
+              description: 'NestJS server port. Auto-detected if only one server is running.',
+            },
+            limit: {
+              type: 'number',
+              description: 'Number of entries (default 50, max 200)',
+            },
+            method: {
+              type: 'string',
+              description: 'Filter by HTTP method, such as GET, POST, PUT, PATCH, or DELETE.',
+            },
+            statusCode: {
+              type: 'number',
+              description: 'Filter by exact HTTP status code.',
+            },
+            statusClass: {
+              type: 'string',
+              enum: ['2xx', '3xx', '4xx', '5xx'],
+              description: 'Filter by HTTP status class.',
+            },
+            pathContains: {
+              type: 'string',
+              description: 'Filter to requests whose path contains this substring.',
+            },
+            minDurationMs: {
+              type: 'number',
+              description: 'Filter to requests that took at least this many milliseconds.',
+            },
+            onlyErrors: {
+              type: 'boolean',
+              description: 'Return only failed/error requests.',
+            },
+          },
+        },
+      },
+      {
+        name: 'get_config',
+        description:
+          'Inspect runtime configuration (env vars + ConfigService). Secrets are automatically masked. Use to debug "why is this env behaving differently".',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            port: {
+              type: 'number',
+              description: 'NestJS server port. Auto-detected if only one server is running.',
+            },
+            source: {
+              type: 'string',
+              enum: ['all', 'env', 'config-service'],
+              description: 'Configuration source to inspect.',
+            },
+            keyContains: {
+              type: 'string',
+              description: 'Filter to configuration keys containing this substring.',
+            },
+            includeMasked: {
+              type: 'boolean',
+              description: 'Include keys whose values are masked because they look sensitive.',
+            },
+          },
+        },
+      },
     ],
   }
 })
@@ -158,7 +228,7 @@ server.setRequestHandler(GetPromptRequestSchema, async (request) => {
             'Configure MCP client:',
             '{"command":"npx","args":["-y","nestjs-devtools-mcp@latest"]}',
             '',
-            'Then call tools discover_servers, get_logs, and get_routes.',
+            'Then call tools discover_servers, get_logs, get_routes, get_request_history, and get_config.',
           ].join('\n'),
         },
       },
@@ -243,6 +313,44 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
 
         return {
           content: [{ type: 'text', text: JSON.stringify(routeData, null, 2) }],
+        }
+      }
+
+      case 'get_request_history': {
+        const schema = z.object({
+          port: z.number().optional(),
+          limit: z.number().optional(),
+          method: z.string().optional(),
+          statusCode: z.number().optional(),
+          statusClass: z.enum(['2xx', '3xx', '4xx', '5xx']).optional(),
+          pathContains: z.string().optional(),
+          minDurationMs: z.number().optional(),
+          onlyErrors: z.boolean().optional(),
+        })
+        const { port, ...payload } = schema.parse(args || {})
+
+        const targetPort = await devtoolsProxy.resolvePort(port)
+        const requestHistoryData = await devtoolsProxy.callPluginTool(targetPort, 'get_request_history', payload)
+
+        return {
+          content: [{ type: 'text', text: JSON.stringify(requestHistoryData, null, 2) }],
+        }
+      }
+
+      case 'get_config': {
+        const schema = z.object({
+          port: z.number().optional(),
+          source: z.enum(['all', 'env', 'config-service']).optional(),
+          keyContains: z.string().optional(),
+          includeMasked: z.boolean().optional(),
+        })
+        const { port, ...payload } = schema.parse(args || {})
+
+        const targetPort = await devtoolsProxy.resolvePort(port)
+        const configData = await devtoolsProxy.callPluginTool(targetPort, 'get_config', payload)
+
+        return {
+          content: [{ type: 'text', text: JSON.stringify(configData, null, 2) }],
         }
       }
 

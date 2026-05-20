@@ -57,19 +57,25 @@ describe('DevtoolsMcpModule (Integration)', () => {
       expect(collectors).toBeDefined()
     })
 
-    it('should include LogCollector and RouteCollector in the collectors array', () => {
+    it('should include all enabled collectors in the collectors array', () => {
       const controller = module.get<DevtoolsMcpController>(DevtoolsMcpController)
       const collectors = (controller as any).collectors
       expect(Array.isArray(collectors)).toBe(true)
-      expect(collectors.length).toBe(2)
+      expect(collectors.length).toBe(4)
 
       const logCollector = (collectors as any[]).find((c) => c.toolName === 'get_logs')
       const routeCollector = (collectors as any[]).find((c) => c.toolName === 'get_routes')
+      const requestHistoryCollector = (collectors as any[]).find((c) => c.toolName === 'get_request_history')
+      const configCollector = (collectors as any[]).find((c) => c.toolName === 'get_config')
 
       expect(logCollector).toBeDefined()
       expect(logCollector.description).toBeTruthy()
       expect(routeCollector).toBeDefined()
       expect(routeCollector.description).toBeTruthy()
+      expect(requestHistoryCollector).toBeDefined()
+      expect(requestHistoryCollector.description).toBeTruthy()
+      expect(configCollector).toBeDefined()
+      expect(configCollector.description).toBeTruthy()
     })
 
     it('should register DevtoolsMcpController', () => {

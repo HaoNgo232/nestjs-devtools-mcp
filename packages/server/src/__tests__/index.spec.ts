@@ -65,10 +65,12 @@ describe('MCP Bridge Entry Point (index.ts)', () => {
   describe('List Tools Handler', () => {
     it('should return the available tools list', async () => {
       const result = await listToolsHandler()
-      expect(result.tools).toHaveLength(3)
+      expect(result.tools).toHaveLength(5)
       expect(result.tools.map((t: any) => t.name)).toContain('discover_servers')
       expect(result.tools.map((t: any) => t.name)).toContain('get_logs')
       expect(result.tools.map((t: any) => t.name)).toContain('get_routes')
+      expect(result.tools.map((t: any) => t.name)).toContain('get_request_history')
+      expect(result.tools.map((t: any) => t.name)).toContain('get_config')
     })
   })
 
@@ -122,6 +124,8 @@ describe('MCP Bridge Entry Point (index.ts)', () => {
       expect(result.contents[0].mimeType).toBe('application/json')
       expect(result.contents[0].text).toContain('nestjs-devtools-mcp')
       expect(result.contents[0].text).toContain('discover_servers')
+      expect(result.contents[0].text).toContain('get_request_history')
+      expect(result.contents[0].text).toContain('get_config')
     })
 
     it('should throw error for missing resource', async () => {
@@ -184,6 +188,64 @@ describe('MCP Bridge Entry Point (index.ts)', () => {
       expect(devtoolsProxy.resolvePort).toHaveBeenCalledWith(3001)
       expect(devtoolsProxy.callPluginTool).toHaveBeenCalledWith(3001, 'get_routes', {})
       expect(JSON.parse(result.content[0].text)).toEqual({ routes: [] })
+    })
+
+    it('should handle get_request_history tool', async () => {
+      jest.spyOn(devtoolsProxy, 'resolvePort').mockResolvedValue(3002)
+      jest.spyOn(devtoolsProxy, 'callPluginTool').mockResolvedValue({ entries: [] })
+
+      const result = await callToolHandler({
+        params: {
+          name: 'get_request_history',
+          arguments: {
+            port: 3002,
+            limit: 25,
+            method: 'POST',
+            statusCode: 500,
+            statusClass: '5xx',
+            pathContains: '/api',
+            minDurationMs: 100,
+            onlyErrors: true,
+          },
+        },
+      })
+
+      expect(devtoolsProxy.resolvePort).toHaveBeenCalledWith(3002)
+      expect(devtoolsProxy.callPluginTool).toHaveBeenCalledWith(3002, 'get_request_history', {
+        limit: 25,
+        method: 'POST',
+        statusCode: 500,
+        statusClass: '5xx',
+        pathContains: '/api',
+        minDurationMs: 100,
+        onlyErrors: true,
+      })
+      expect(JSON.parse(result.content[0].text)).toEqual({ entries: [] })
+    })
+
+    it('should handle get_config tool', async () => {
+      jest.spyOn(devtoolsProxy, 'resolvePort').mockResolvedValue(3003)
+      jest.spyOn(devtoolsProxy, 'callPluginTool').mockResolvedValue({ entries: [] })
+
+      const result = await callToolHandler({
+        params: {
+          name: 'get_config',
+          arguments: {
+            port: 3003,
+            source: 'config-service',
+            keyContains: 'DATABASE',
+            includeMasked: true,
+          },
+        },
+      })
+
+      expect(devtoolsProxy.resolvePort).toHaveBeenCalledWith(3003)
+      expect(devtoolsProxy.callPluginTool).toHaveBeenCalledWith(3003, 'get_config', {
+        source: 'config-service',
+        keyContains: 'DATABASE',
+        includeMasked: true,
+      })
+      expect(JSON.parse(result.content[0].text)).toEqual({ entries: [] })
     })
 
     it('should throw error for unsupported tool', async () => {

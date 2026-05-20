@@ -12,6 +12,18 @@ For most users, follow the **Quick Start** guide in the main [**README.md**](../
 2. Register `DevtoolsMcpModule.register()` in your `AppModule`.
 3. Configure your MCP Client (Claude Desktop/Cursor) to use `npx -y nestjs-devtools-mcp@latest`.
 
+Available MCP tools:
+
+- `discover_servers`: Scan localhost and list NestJS apps with plugin enabled.
+- `get_logs`: Fetch buffered runtime logs.
+- `get_routes`: Fetch registered HTTP routes.
+- `get_request_history`: Fetch recent HTTP request history with filters for method, status, path, duration, and errors.
+- `get_config`: Fetch sanitized runtime configuration from environment variables and ConfigService.
+
+`get_request_history` records the recent HTTP requests processed by the app, including unmatched 404 responses. It does not record request bodies, response bodies, or internal `/_dev/mcp/*` tool calls by default.
+
+`get_config` reads from `process.env` and, when available, `@nestjs/config`'s `ConfigService`. Sensitive keys and sensitive-looking values are always masked and there is no option to disable masking.
+
 ---
 
 ## Configuring Specific MCP Clients
@@ -104,6 +116,8 @@ import { DevtoolsMcpModule } from '@nestjs-devtools-mcp/plugin';
 export class AppModule {}
 ```
 
+`captureRequestBody` defaults to `false`. Enable `DevtoolsMcpModule.register({ captureRequestBody: true })` only for local debugging; multipart bodies are never captured. Configuration values that look like secrets are masked before they are returned by `get_config`, and masking cannot be disabled.
+
 ### Step 4: Configure MCP Client to use Local Bridge
 Instead of using `npx`, point your MCP client directly to the compiled entry point of your local server package:
 ```json
@@ -124,3 +138,6 @@ Instead of using `npx`, point your MCP client directly to the compiled entry poi
 - **Port Range**: The Bridge CLI automatically scans ports `3000-3010`. If your NestJS app runs on a different port, ensure it falls within this range. Custom port configuration may be supported in a future release.
 - **Security Check**: The plugin only allows connections from `127.0.0.1` and `::1`. If you are running inside a container, ensure the network mode is `host` or the bridge IP is correctly mapped (refer to `LocalhostOnlyGuard` for implementation details).
 - **Production Mode**: The plugin is disabled by default if `NODE_ENV === 'production'`. To force enable it (not recommended), use `DevtoolsMcpModule.register({ disabled: false })`.
+- **Request Bodies and Config Secrets**: Request body capture is off by default, should only be enabled for local debugging, and never captures multipart payloads. The config tool masks values that look like secrets.
+- **Request History Scope**: `get_request_history` records HTTP traffic only. It does not capture WebSocket, gRPC, or Nest microservice transports.
+- **Config Scope**: `get_config` is read-only. It does not modify runtime config and does not fetch values from databases, Redis, or external config stores.

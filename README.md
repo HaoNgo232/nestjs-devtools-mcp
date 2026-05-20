@@ -18,6 +18,12 @@ Currently available tools:
 - `discover_servers` — Find local NestJS servers with the plugin enabled.
 - `get_logs` — Retrieve recent runtime logs from a detected NestJS server.
 - `get_routes` — List registered HTTP routes (method, path, controller, handler).
+- `get_request_history` — Retrieve recent HTTP request history with filters for method, status, path, duration, and errors.
+- `get_config` — Retrieve sanitized runtime configuration from environment variables and ConfigService.
+
+`get_request_history` captures real HTTP traffic, including unmatched 404s, without recording request or response bodies by default. Internal `/_dev/mcp/*` calls are excluded so tool calls do not pollute the history.
+
+`get_config` is read-only and always masks values that look sensitive, including tokens, passwords, auth keys, private keys, and database URLs. Secret masking cannot be disabled.
 
 More tools may be added in future releases.
 
@@ -53,6 +59,8 @@ import { DevtoolsMcpModule } from '@nestjs-devtools-mcp/plugin'
 })
 export class AppModule {}
 ```
+
+Request body capture is off by default. If you need it for local debugging, enable `DevtoolsMcpModule.register({ captureRequestBody: true })`; multipart bodies are never captured, and configuration secrets returned by `get_config` are always masked.
 
 Apply the custom logger in `main.ts` to allow context interception:
 
