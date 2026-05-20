@@ -99,18 +99,24 @@ node -e "
 ### 2. Publishing to NPM
 After syncing versions, build and publish both packages.
 
+> [!IMPORTANT]
+> **DO NOT** use `npm publish` to release these packages. 
+> Due to a known bug in the `npm` CLI (v10 & v11) when executing inside workspaces/monorepos, `npm publish` will mistakenly detect the binary path (`./dist/index.js`) as invalid and **automatically delete the `bin` field** from `package.json` before upload. This breaks `npx` execution.
+>
+> Always use **`pnpm publish`** instead, which handles monorepo packaging correctly.
+
 **Package A: Plugin**
 ```bash
 cd packages/plugin
 pnpm build
-npm publish --access public
+pnpm publish --access public
 ```
 
 **Package B: Bridge (CLI)**
 ```bash
 cd packages/server
 pnpm build
-npm publish --access public
+pnpm publish --access public
 ```
 
 ### 3. Local Installation (For testing before publish)

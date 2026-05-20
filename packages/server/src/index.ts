@@ -268,9 +268,24 @@ export async function runServer() {
 }
 
 // Chạy server nếu đây là file thực thi chính - Run server if this is the main entry point
-// Dùng process.argv[1] thay cho import.meta để tương thích với cấu hình TS hiện tại
+//
+// IMPORTANT: Do NOT simplify this check.
+// We need multiple conditions because the execution context varies:
+//
+// 1. `require.main === module`  → Direct invocation: `node dist/index.js`
+// 2. endsWith('index.ts/.js')  → ts-node / local dev environment
+// 3. endsWith('nestjs-devtools-mcp') → npx cache: argv[1] is a symlink named
+//    after the binary (e.g. ~/.npm/_npx/.../bin/nestjs-devtools-mcp)
+//
+// Bug history: Using only endsWith('index.js') caused the server to exit
+// immediately when run via `npx` because the symlink path didn't match.
+// This resulted in IDE MCP clients reporting "Connection closed" (MCP -32000).
 const currentFile = process.argv[1]
-const isMain = currentFile?.endsWith('index.ts') || currentFile?.endsWith('index.js')
+const isMain =
+  (typeof require !== 'undefined' && require.main === module) ||
+  currentFile?.endsWith('index.ts') ||
+  currentFile?.endsWith('index.js') ||
+  currentFile?.endsWith('nestjs-devtools-mcp')
 
 if (isMain) {
   runServer().catch((err) => {

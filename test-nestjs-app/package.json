@@ -1,0 +1,20 @@
+{
+  "name": "test-nestjs-app",
+  "private": true,
+  "scripts": {
+    "start": "ts-node main.ts"
+  },
+  "dependencies": {
+    "@nestjs/common": "^11.0.0",
+    "@nestjs/core": "^11.0.0",
+    "@nestjs/platform-express": "^11.0.0",
+    "reflect-metadata": "^0.2.0",
+    "rxjs": "^7.8.1",
+    "@nestjs-devtools-mcp/plugin": "workspace:*"
+  },
+  "devDependencies": {
+    "ts-node": "^10.9.2",
+    "typescript": "^5.7.3",
+    "@types/node": "^22.19.15"
+  }
+}

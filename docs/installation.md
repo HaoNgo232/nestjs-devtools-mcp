@@ -14,6 +14,68 @@ For most users, follow the **Quick Start** guide in the main [**README.md**](../
 
 ---
 
+## Configuring Specific MCP Clients
+
+Here is how to add the NestJS DevTools MCP to the most popular AI coding assistants:
+
+### 1. Claude Desktop
+
+To use it with Claude Desktop, you need to add the server configuration to your `claude_desktop_config.json` file.
+
+* **Config File Location**:
+  * **macOS**: `~/Library/Application Support/Claude/claude_desktop_config.json`
+  * **Windows**: `%APPDATA%\Claude\claude_desktop_config.json` (e.g., `C:\Users\<YourUsername>\AppData\Roaming\Claude\claude_desktop_config.json`)
+  * **Linux**: `~/.config/Claude/claude_desktop_config.json`
+
+* **Configuration**:
+  Add this under the `mcpServers` object:
+  ```json
+  {
+    "mcpServers": {
+      "nestjs-devtools": {
+        "command": "npx",
+        "args": ["-y", "nestjs-devtools-mcp@latest"]
+      }
+    }
+  }
+  ```
+
+### 2. Cursor
+
+In Cursor, you configure MCP servers directly through the user interface:
+
+1. Open Cursor and go to **Settings** (Gear icon in top right) -> **Cursor Settings**.
+2. Navigate to **Features** -> **MCP**.
+3. Click the **+ Add New MCP Server** button.
+4. Fill in the fields:
+   * **Name**: `nestjs-devtools`
+   * **Type**: `command`
+   * **Command**: `npx -y nestjs-devtools-mcp@latest` (or `npx` for command, and `-y`, `nestjs-devtools-mcp@latest` in the arguments field if separated).
+5. Click **Save** and verify that the server status turns green (Connected).
+
+### 3. VS Code Extensions (Cline, Roo Code)
+
+If you are using VS Code extensions like **Cline** or **Roo Code (formerly Roo Cline)**:
+
+1. Click on the extension icon in the VS Code sidebar.
+2. Open the extension **Settings** (Gear icon inside the extension panel).
+3. Under the **MCP Mode** or **MCP Servers** section, configure the new server:
+   * Edit the `cline_mcp_settings.json` file (usually linked in settings or located at `~/.code/User/globalStorage/saoudrizwan.claude-dev/settings/cline_mcp_settings.json` / `roocode_mcp_settings.json`).
+   * Add the configuration:
+     ```json
+     {
+       "mcpServers": {
+         "nestjs-devtools": {
+           "command": "npx",
+           "args": ["-y", "nestjs-devtools-mcp@latest"],
+           "disabled": false
+         }
+       }
+     }
+     ```
+
+---
+
 ## Installation for Developers (Local Repository)
 
 If you are contributing to this project or want to use the latest unreleased features directly from the source code, follow these steps.

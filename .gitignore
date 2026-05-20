@@ -69,3 +69,4 @@ test_output.txt
 .synapse/
 .codex
 .antigravitycli/
+test-nestjs-app/node_modules
