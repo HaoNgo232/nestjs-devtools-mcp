@@ -70,3 +70,5 @@ test_output.txt
 .codex
 .antigravitycli/
 test-nestjs-app/node_modules
+.agent/.shared/ui-ux-pro-max/scripts/__pycache__/core.cpython-313.pyc
+.agent/.shared/ui-ux-pro-max/scripts/__pycache__/design_system.cpython-313.pyc
