@@ -57,44 +57,44 @@ export async function discoverServers(
   const rangePorts = Array.from({ length: endPort - startPort + 1 }, (_, i) => startPort + i)
   const portsToScan = [...new Set([...listenPorts, ...rangePorts])]
 
-  // Bước 2: Thử các prefix phổ biến nếu /_dev/mcp/health không phản hồi ở root
-  const prefixes = ['', '/api', '/v1']
+  const rawPrefix = process.env.NESTJS_MCP_PREFIX || ''
+  const prefix = normalizePrefix(rawPrefix)
 
   // Scan ports in parallel to increase performance
   const results = await Promise.allSettled(
     portsToScan.map(async (port) => {
-      // Thử từng prefix cho mỗi port
-      for (const prefix of prefixes) {
-        const controller = new AbortController()
-        const timeoutId = setTimeout(() => controller.abort(), 400) // Timeout ngắn hơn cho scan nhanh
-        const url = `http://localhost:${port}${prefix}/_dev/mcp/health`
+      const controller = new AbortController()
+      const timeoutId = setTimeout(() => controller.abort(), 400) // Timeout ngắn hơn cho scan nhanh
+      const url = `http://localhost:${port}${prefix}/_dev/mcp/health`
 
-        try {
-          const response = await fetch(url, {
-            signal: controller.signal,
-          })
+      try {
+        const response = await fetch(url, {
+          signal: controller.signal,
+        })
 
-          if (response.ok) {
-            const json = await response.json()
-            const data = json.data ?? json
+        if (response.ok) {
+          const json = (await response.json()) as Record<string, unknown>
+          const data = (json.data ?? json) as Record<string, unknown>
 
-            if (data.name === 'nestjs-devtools-mcp' || data.module === 'nestjs-devtools-mcp') {
-              clearTimeout(timeoutId)
-              return {
-                port,
-                pid: data.pid,
-                name: data.name,
-                version: data.version,
-                uptime: data.uptime,
-                healthUrl: url,
-              }
+          const name = String(data.name || '')
+          const moduleName = String(data.module || '')
+
+          if (name === 'nestjs-devtools-mcp' || moduleName === 'nestjs-devtools-mcp') {
+            clearTimeout(timeoutId)
+            return {
+              port,
+              pid: Number(data.pid || 0),
+              name,
+              version: String(data.version || '0.0.0'),
+              uptime: Number(data.uptime || 0),
+              healthUrl: url,
             }
           }
-        } catch (_err) {
-          // Ignored
-        } finally {
-          clearTimeout(timeoutId)
         }
+      } catch (_err) {
+        // Ignored
+      } finally {
+        clearTimeout(timeoutId)
       }
       return null
     }),
@@ -107,4 +107,12 @@ export async function discoverServers(
   }
 
   return servers
+}
+
+function normalizePrefix(raw: string): string {
+  if (!raw) return ''
+  const trimmed = raw.trim()
+  if (trimmed === '/' || trimmed === '') return ''
+  const stripped = trimmed.replace(/^\/+/, '').replace(/\/+$/, '')
+  return stripped ? `/${stripped}` : ''
 }

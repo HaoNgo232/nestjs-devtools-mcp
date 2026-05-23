@@ -1,11 +1,13 @@
 import { CallHandler, ExecutionContext, Inject, Injectable, NestInterceptor } from '@nestjs/common'
 import { PATH_METADATA } from '@nestjs/common/constants'
 import { Reflector } from '@nestjs/core'
-import { Observable, throwError } from 'rxjs'
+import { randomUUID } from 'node:crypto'
+import { Observable, throwError, defer } from 'rxjs'
 import { catchError, finalize } from 'rxjs/operators'
 import { DEVTOOLS_OPTIONS_TOKEN, DevtoolsMcpOptions } from './devtools-mcp.options'
 import { REQUEST_HISTORY_RECORDED } from './request-history.constants'
 import { RequestHistoryBufferService, RequestHistoryError } from './request-history-buffer.service'
+import { RequestContextService } from './request-context.service'
 
 interface HeaderBag {
   [key: string]: string | string[] | number | undefined
@@ -21,6 +23,7 @@ interface HttpRequestLike {
   headers?: HeaderBag
   socket?: { remoteAddress?: string }
   connection?: { remoteAddress?: string }
+  requestId?: string
 }
 
 interface HttpResponseLike {
@@ -38,6 +41,7 @@ export class RequestHistoryInterceptor implements NestInterceptor {
     private readonly reflector: Reflector,
     @Inject(DEVTOOLS_OPTIONS_TOKEN)
     private readonly options: DevtoolsMcpOptions,
+    private readonly contextService: RequestContextService,
   ) {}
 
   intercept(context: ExecutionContext, next: CallHandler): Observable<unknown> {
@@ -48,6 +52,9 @@ export class RequestHistoryInterceptor implements NestInterceptor {
 
     // The middleware fallback records only requests that never reach a route handler.
     http.request[REQUEST_HISTORY_RECORDED] = true
+
+    const requestId = http.request.requestId || randomUUID()
+    http.request.requestId = requestId
 
     const startedAt = Date.now()
     let recorded = false
@@ -74,6 +81,7 @@ export class RequestHistoryInterceptor implements NestInterceptor {
           requestSize: this.getContentLength(http.request),
           responseSize: this.getResponseSize(http.response),
           error,
+          requestId,
         })
       } catch {
         // Request history must never affect the host application's behavior.
@@ -94,20 +102,26 @@ export class RequestHistoryInterceptor implements NestInterceptor {
       }
     })
 
-    return next.handle().pipe(
-      catchError((error: unknown) => {
-        record(this.getErrorStatusCode(error, http.response), this.serializeError(error))
-        return throwError(() => error)
-      }),
-      finalize(() => {
-        if (!recorded && this.isResponseFinished(http.response)) {
-          record(this.getStatusCode(http.response), null)
-        }
-      }),
-    )
+    return defer(() => {
+      return this.contextService.run(requestId, () => {
+        return next.handle().pipe(
+          catchError((error: unknown) => {
+            record(this.getErrorStatusCode(error, http.response), this.serializeError(error))
+            return throwError(() => error)
+          }),
+          finalize(() => {
+            if (!recorded && this.isResponseFinished(http.response)) {
+              record(this.getStatusCode(http.response), null)
+            }
+          }),
+        )
+      })
+    })
   }
 
-  private safeGetHttpContext(context: ExecutionContext): { request: HttpRequestLike; response: HttpResponseLike } | null {
+  private safeGetHttpContext(
+    context: ExecutionContext,
+  ): { request: HttpRequestLike; response: HttpResponseLike } | null {
     try {
       const http = context.switchToHttp()
       const request = http.getRequest<HttpRequestLike>()
@@ -269,18 +283,5 @@ export class RequestHistoryInterceptor implements NestInterceptor {
 
   private isResponseFinished(response: HttpResponseLike): boolean {
     return response.writableEnded === true
-  }
-
-  private shouldCaptureRequestBody(request: HttpRequestLike): boolean {
-    if (this.isMultipartRequest(request)) {
-      return false
-    }
-
-    return this.options.captureRequestBody === true
-  }
-
-  private isMultipartRequest(request: HttpRequestLike): boolean {
-    const contentType = this.getHeaderValue(request, 'content-type') || ''
-    return /^multipart\//i.test(contentType)
   }
 }

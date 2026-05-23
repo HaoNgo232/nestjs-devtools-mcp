@@ -219,4 +219,55 @@ describe('DevtoolsMcpModule (Integration)', () => {
       expect(options.name).toBe('nestjs-devtools-mcp') // Fallback cứng khi path lỗi - Hardcoded fallback on path error
     })
   })
+
+  describe('Auto-apply logger', () => {
+    it('auto-registers CustomLoggerService as app logger on bootstrap', async () => {
+      const useLoggerSpy = jest.fn()
+      const moduleFixture = await Test.createTestingModule({
+        imports: [DevtoolsMcpModule.register()],
+      }).compile()
+      const app = moduleFixture.createNestApplication({ bufferLogs: true })
+      app.useLogger = useLoggerSpy
+      await app.init()
+
+      expect(useLoggerSpy).toHaveBeenCalledWith(expect.any(CustomLoggerService))
+      await app.close()
+    })
+
+    it('emits a console.warn at bootstrap if useLogger was not applied within 100ms', async () => {
+      const warnSpy = jest.spyOn(console, 'warn').mockImplementation()
+      const originalApplied = (DevtoolsMcpModule as any).loggerApplied
+      ;(DevtoolsMcpModule as any).loggerApplied = false
+
+      const moduleFixture = await Test.createTestingModule({
+        imports: [DevtoolsMcpModule.register()],
+      }).compile()
+      const app = moduleFixture.createNestApplication()
+      jest.spyOn(app, 'get').mockImplementation((token: any) => {
+        if (token === CustomLoggerService) {
+          throw new Error('Not found')
+        }
+        return moduleFixture.get(token)
+      })
+
+      await app.init()
+
+      await new Promise((r) => setTimeout(r, 150))
+      expect(warnSpy).toHaveBeenCalledWith(
+        expect.stringContaining('[DevtoolsMcp] CustomLoggerService was not automatically applied'),
+      )
+
+      warnSpy.mockRestore()
+      ;(DevtoolsMcpModule as any).loggerApplied = originalApplied
+      await app.close()
+    })
+
+    it('does NOT auto-apply when options.disabled is true', async () => {
+      const module = await Test.createTestingModule({
+        imports: [DevtoolsMcpModule.register({ disabled: true })],
+      }).compile()
+      // Verify no CustomLoggerService is bound
+      expect(() => module.get(CustomLoggerService)).toThrow()
+    })
+  })
 })

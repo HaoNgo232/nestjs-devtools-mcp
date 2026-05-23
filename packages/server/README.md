@@ -57,7 +57,6 @@ The bridge automatically scans local ports (`3000-3010`) to find any running Nes
 
 - NestJS application must have `@nestjs-devtools-mcp/plugin` imported.
 - Bridge only connects to `localhost` endpoints for security.
-- Request body capture is disabled by default in the plugin. Enable `captureRequestBody` only for local debugging; multipart bodies are never captured.
 - Config values that look like secrets are masked before they are returned by `get_config`.
 
 ## License

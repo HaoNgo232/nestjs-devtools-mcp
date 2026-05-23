@@ -85,6 +85,20 @@ describe('LogBufferService', () => {
     expect(serviceLarge.getLogs()).toHaveLength(50)
   })
 
+  it('phải lọc được log theo requestId', () => {
+    service.add({ level: 'log', message: 'L1', requestId: 'req-1' })
+    service.add({ level: 'log', message: 'L2', requestId: 'req-2' })
+    service.add({ level: 'log', message: 'L3', requestId: null })
+
+    const logsReq1 = service.getLogs(10, 'all', 'req-1')
+    expect(logsReq1).toHaveLength(1)
+    expect(logsReq1[0].message).toBe('L1')
+
+    const logsNull = service.getLogs(10, 'all', null)
+    expect(logsNull).toHaveLength(1)
+    expect(logsNull[0].message).toBe('L3')
+  })
+
   describe('mặc định (default constructor values)', () => {
     it('nên sử dụng kích thước buffer mặc định là 500 nếu cấu hình logBufferSize bị thiếu', () => {
       const serviceDefault = new LogBufferService({} as any)

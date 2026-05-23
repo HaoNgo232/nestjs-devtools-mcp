@@ -6,8 +6,10 @@ import { CustomLoggerService } from './custom-logger.service'
  * Reduces user friction from 3 lines of manual wiring down to a single line.
  *
  * @param app instance of INestApplication or INestApplicationContext that has been initialized.
+ * @deprecated [DevtoolsMcp] applyDevtoolsLogger() is no longer required — auto-applied since v0.3.0
  */
 export function applyDevtoolsLogger(app: INestApplicationContext): void {
+  console.warn('[DevtoolsMcp] applyDevtoolsLogger() is no longer required — auto-applied since v0.3.0')
   try {
     const logger = app.get(CustomLoggerService)
     app.useLogger(logger)

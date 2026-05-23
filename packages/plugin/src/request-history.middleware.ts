@@ -1,7 +1,9 @@
 import { Inject, Injectable, NestMiddleware } from '@nestjs/common'
+import { randomUUID } from 'node:crypto'
 import { DEVTOOLS_OPTIONS_TOKEN, DevtoolsMcpOptions } from './devtools-mcp.options'
 import { REQUEST_HISTORY_RECORDED } from './request-history.constants'
 import { RequestHistoryBufferService, RequestHistoryError } from './request-history-buffer.service'
+import { RequestContextService } from './request-context.service'
 
 interface HeaderBag {
   [key: string]: string | string[] | number | undefined
@@ -17,6 +19,7 @@ interface HttpRequestLike {
   headers?: HeaderBag
   socket?: { remoteAddress?: string }
   connection?: { remoteAddress?: string }
+  requestId?: string
 }
 
 interface HttpResponseLike {
@@ -34,6 +37,7 @@ export class RequestHistoryMiddleware implements NestMiddleware {
     private readonly buffer: RequestHistoryBufferService,
     @Inject(DEVTOOLS_OPTIONS_TOKEN)
     private readonly options: DevtoolsMcpOptions,
+    private readonly contextService: RequestContextService,
   ) {}
 
   use(request: HttpRequestLike, response: HttpResponseLike, next: NextFunctionLike): void {
@@ -41,6 +45,9 @@ export class RequestHistoryMiddleware implements NestMiddleware {
       next()
       return
     }
+
+    const requestId = request.requestId || randomUUID()
+    request.requestId = requestId
 
     const startedAt = Date.now()
     let recorded = false
@@ -67,6 +74,7 @@ export class RequestHistoryMiddleware implements NestMiddleware {
           requestSize: this.getContentLength(request),
           responseSize: this.getResponseSize(response),
           error,
+          requestId,
         })
       } catch {
         // Middleware fallback must never affect the host application's behavior.
@@ -88,7 +96,9 @@ export class RequestHistoryMiddleware implements NestMiddleware {
       }
     })
 
-    next()
+    this.contextService.run(requestId, () => {
+      next()
+    })
   }
 
   private isDevtoolsRequest(request: HttpRequestLike): boolean {

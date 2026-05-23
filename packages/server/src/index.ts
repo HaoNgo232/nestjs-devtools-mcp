@@ -95,6 +95,10 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
               enum: ['all', 'log', 'error', 'warn', 'debug', 'verbose'],
               description: 'Filter logs by level.',
             },
+            requestId: {
+              type: 'string',
+              description: 'Filter logs by request correlation ID (can be null or string).',
+            },
           },
         },
       },
@@ -151,6 +155,10 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
             onlyErrors: {
               type: 'boolean',
               description: 'Return only failed/error requests.',
+            },
+            requestId: {
+              type: 'string',
+              description: 'Filter by request correlation ID (can be null or string).',
             },
           },
         },
@@ -288,6 +296,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           port: z.number().optional(),
           lines: z.number().optional(),
           level: z.string().optional(),
+          requestId: z.string().nullable().optional(),
         })
         const parsed = schema.parse(args || {})
 
@@ -295,6 +304,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         const logData = await devtoolsProxy.callPluginTool(targetPort, 'get_logs', {
           lines: parsed.lines,
           level: parsed.level,
+          requestId: parsed.requestId,
         })
 
         return {
@@ -326,6 +336,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           pathContains: z.string().optional(),
           minDurationMs: z.number().optional(),
           onlyErrors: z.boolean().optional(),
+          requestId: z.string().nullable().optional(),
         })
         const { port, ...payload } = schema.parse(args || {})
 

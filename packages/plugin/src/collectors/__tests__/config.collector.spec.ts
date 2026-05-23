@@ -86,66 +86,64 @@ describe('ConfigCollector', () => {
     })
   })
 
-  it('filters by source and key substring', async () => {
-    moduleRef.get.mockReturnValue({
-      internalConfig: {
-        database: {
-          host: 'localhost',
-          port: 5432,
-        },
-      },
-    } as never)
+  describe('ConfigCollector — public API only', () => {
+    it('does not read internalConfig or _internalConfig reflectively', async () => {
+      const fakeConfigService = {
+        internalConfig: { SECRET_DATA: 'should-not-appear' },
+        _internalConfig: { ANOTHER: 'should-not-appear' },
+        get: jest.fn((key: string) => undefined),
+      }
+      moduleRef.get.mockReturnValue(fakeConfigService)
 
-    const result = await collector.execute({ source: 'config-service', keyContains: 'HOST' })
+      const result = await collector.execute({ source: 'config-service' })
 
-    expect(result.data.entries).toEqual([
-      {
-        source: 'config-service',
-        key: 'database.host',
-        status: 'set',
-        masked: false,
-        value: 'localhost',
-        type: 'string',
-      },
-    ])
-    expect(result.data.total).toBe(1)
+      const keys = result.data.entries.map((e) => e.key)
+      expect(keys).not.toContain('SECRET_DATA')
+      expect(keys).not.toContain('ANOTHER')
+    })
+
+    it('reads only declared keys via configService.get()', async () => {
+      process.env.NESTJS_MCP_CONFIG_KEYS = 'APP_NAME,DATABASE_HOST'
+      const fakeConfigService = {
+        get: jest.fn((key: string) => {
+          if (key === 'APP_NAME') return 'demo'
+          if (key === 'DATABASE_HOST') return 'localhost'
+          return undefined
+        }),
+      }
+      moduleRef.get.mockReturnValue(fakeConfigService)
+
+      const result = await collector.execute({ source: 'config-service' })
+
+      expect(fakeConfigService.get).toHaveBeenCalledWith('APP_NAME')
+      expect(fakeConfigService.get).toHaveBeenCalledWith('DATABASE_HOST')
+      expect(result.data.entries.map((e) => e.key)).toEqual(expect.arrayContaining(['APP_NAME', 'DATABASE_HOST']))
+      expect(entryByKey(result.data, 'APP_NAME').value).toBe('demo')
+      expect(entryByKey(result.data, 'DATABASE_HOST').value).toBe('localhost')
+      delete process.env.NESTJS_MCP_CONFIG_KEYS
+    })
+
+    it('emits a warning when ConfigService exists but no keys are declared', async () => {
+      const fakeConfigService = {
+        get: jest.fn(),
+      }
+      moduleRef.get.mockReturnValue(fakeConfigService)
+
+      const result = await collector.execute({ source: 'config-service' })
+
+      expect(result.data.warnings.some((w) => w.includes('NESTJS_MCP_CONFIG_KEYS'))).toBe(true)
+    })
   })
 
-  it('omits masked entries when includeMasked is false', async () => {
+  it('masks sensitive config keys and values from ConfigService', async () => {
+    process.env.NESTJS_MCP_CONFIG_KEYS = 'database.host,database.password,callbackUrl'
     moduleRef.get.mockReturnValue({
-      internalConfig: {
-        jwtSecret: 'super-secret',
-        featureFlag: true,
-      },
-    } as never)
-
-    const result = await collector.execute({ includeMasked: false })
-
-    expect(result.data.entries.some((entry) => entry.masked)).toBe(false)
-    expect(result.data.entries.map((entry) => entry.key)).toContain('featureFlag')
-    expect(result.data.entries.map((entry) => entry.key)).not.toContain('jwtSecret')
-    expect(result.data.entries.map((entry) => entry.key)).not.toContain('API_TOKEN')
-  })
-
-  it('returns a clear warning when ConfigService is unavailable', async () => {
-    const result = await collector.execute({ source: 'config-service' })
-
-    expect(result.data.configServiceAvailable).toBe(false)
-    expect(result.data.entries).toEqual([])
-    expect(result.data.warnings).toEqual([
-      'ConfigService unavailable: @nestjs/config is not installed or ConfigModule is not registered.',
-    ])
-  })
-
-  it('flattens ConfigService internalConfig and masks sensitive config keys and values', async () => {
-    moduleRef.get.mockReturnValue({
-      internalConfig: {
-        database: {
-          host: 'localhost',
-          password: 'do-not-leak',
-        },
-        callbackUrl: 'Bearer abcdefghijklmnop',
-      },
+      get: jest.fn((key: string) => {
+        if (key === 'database.host') return 'localhost'
+        if (key === 'database.password') return 'do-not-leak'
+        if (key === 'callbackUrl') return 'Bearer abcdefghijklmnop'
+        return undefined
+      }),
     } as never)
 
     const result = await collector.execute({ source: 'config-service' })
@@ -167,16 +165,19 @@ describe('ConfigCollector', () => {
       value: '***MASKED***',
     })
     expect(result.data.configServiceAvailable).toBe(true)
+    delete process.env.NESTJS_MCP_CONFIG_KEYS
   })
 
   it('serializes arrays, truncates long strings, and marks functions', async () => {
     const longValue = 'x'.repeat(1100)
+    process.env.NESTJS_MCP_CONFIG_KEYS = 'list,longValue,handler'
     moduleRef.get.mockReturnValue({
-      internalConfig: {
-        list: ['a', 'b'],
-        longValue,
-        handler: () => 'unused',
-      },
+      get: jest.fn((key: string) => {
+        if (key === 'list') return ['a', 'b']
+        if (key === 'longValue') return longValue
+        if (key === 'handler') return () => 'unused'
+        return undefined
+      }),
     } as never)
 
     const result = await collector.execute({ source: 'config-service' })
@@ -188,25 +189,6 @@ describe('ConfigCollector', () => {
     expect(typeof truncated).toBe('string')
     expect((truncated as string).length).toBe(1027)
     expect(truncated).toMatch(/\.\.\.$/)
-  })
-
-  it('marks circular ConfigService values without throwing', async () => {
-    const circular: Record<string, unknown> = { name: 'root' }
-    circular.self = circular
-
-    moduleRef.get.mockReturnValue({
-      internalConfig: {
-        circular,
-      },
-    } as never)
-
-    const result = await collector.execute({ source: 'config-service' })
-
-    expect(entryByKey(result.data, 'circular.name')).toMatchObject({ value: 'root' })
-    expect(entryByKey(result.data, 'circular.self')).toMatchObject({
-      status: 'set',
-      masked: false,
-      value: '[Circular]',
-    })
+    delete process.env.NESTJS_MCP_CONFIG_KEYS
   })
 })

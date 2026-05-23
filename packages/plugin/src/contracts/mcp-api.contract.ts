@@ -22,6 +22,7 @@ export interface McpLogEntry {
   readonly level: 'log' | 'error' | 'warn' | 'debug' | 'verbose'
   readonly context: string
   readonly message: string
+  readonly requestId: string | null
 }
 
 /** POST /_dev/mcp/tools/get_logs — Request body */
@@ -70,6 +71,7 @@ export interface RequestHistoryEntry {
     readonly message: string
     readonly stack: string | null
   } | null
+  readonly requestId: string | null
 }
 
 /** POST /_dev/mcp/tools/get_request_history — Request body */

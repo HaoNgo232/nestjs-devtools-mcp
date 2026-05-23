@@ -113,6 +113,28 @@ describe('CustomLoggerService', () => {
     )
   })
 
+  it('should attach requestId to buffered logs when context service is present', () => {
+    const mockContextService = {
+      getRequestId: jest.fn().mockReturnValue('req-123'),
+    }
+    const loggerWithContext = new CustomLoggerService(
+      mockBuffer as unknown as LogBufferService,
+      'TestCtx',
+      mockContextService as any,
+    )
+
+    loggerWithContext.log('message with context')
+
+    expect(mockContextService.getRequestId).toHaveBeenCalled()
+    expect(mockBuffer.add).toHaveBeenCalledWith(
+      expect.objectContaining({
+        level: 'log',
+        message: 'message with context',
+        requestId: 'req-123',
+      }),
+    )
+  })
+
   // ── Object message serialization ──────────────────────────
 
   it('should JSON.stringify object messages', () => {

@@ -40,10 +40,13 @@ export class RequestHistoryCollector implements DevtoolsCollector<RequestHistory
       method: typeof params.method === 'string' ? params.method : undefined,
       statusCode: typeof params.statusCode === 'number' ? params.statusCode : undefined,
       statusClass:
-        typeof params.statusClass === 'number' || typeof params.statusClass === 'string' ? params.statusClass : undefined,
+        typeof params.statusClass === 'number' || typeof params.statusClass === 'string'
+          ? params.statusClass
+          : undefined,
       pathContains: typeof params.pathContains === 'string' ? params.pathContains : undefined,
       minDurationMs: typeof params.minDurationMs === 'number' ? params.minDurationMs : undefined,
       onlyErrors: params.onlyErrors === true,
+      requestId: typeof params.requestId === 'string' || params.requestId === null ? params.requestId : undefined,
     }
   }
 

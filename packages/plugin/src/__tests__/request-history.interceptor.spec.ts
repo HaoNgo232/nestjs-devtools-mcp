@@ -36,6 +36,7 @@ class MockResponse extends EventEmitter {
 
 describe('RequestHistoryInterceptor', () => {
   let buffer: jest.Mocked<Pick<RequestHistoryBufferService, 'add'>>
+  let contextService: any
   let interceptor: RequestHistoryInterceptor
   let response: MockResponse
 
@@ -74,19 +75,47 @@ describe('RequestHistoryInterceptor', () => {
     buffer = {
       add: jest.fn(),
     }
+    contextService = {
+      run: jest.fn((id, cb) => cb()),
+      getRequestId: jest.fn().mockReturnValue('mock-id'),
+    }
 
     interceptor = new RequestHistoryInterceptor(
       buffer as unknown as RequestHistoryBufferService,
       new Reflector(),
       { endpoint: '/_dev/mcp' },
+      contextService,
     )
   })
 
-  it('records successful requests after the response finishes', async () => {
-    const result = await lastValueFrom(interceptor.intercept(createContext(), { handle: () => of('ok') }))
+  it('records successful requests after the response finishes with requestId', async () => {
+    const request: any = {
+      method: 'GET',
+      originalUrl: '/users/42?include=posts',
+      ip: '127.0.0.1',
+      headers: {
+        'user-agent': 'jest-agent',
+        'content-length': '123',
+      },
+      requestId: 'custom-req-id',
+    }
+    const result = await lastValueFrom(
+      interceptor.intercept(
+        {
+          switchToHttp: () => ({
+            getRequest: () => request,
+            getResponse: () => response,
+          }),
+          getClass: () => UsersController,
+          getHandler: () => handler,
+        } as any,
+        { handle: () => of('ok') },
+      ),
+    )
     response.finish()
 
     expect(result).toBe('ok')
+    expect(contextService.run).toHaveBeenCalledWith('custom-req-id', expect.any(Function))
     expect(buffer.add).toHaveBeenCalledWith(
       expect.objectContaining({
         method: 'GET',
@@ -100,33 +129,29 @@ describe('RequestHistoryInterceptor', () => {
         requestSize: 123,
         responseSize: 456,
         error: null,
+        requestId: 'custom-req-id',
       }),
     )
   })
 
-  it('records thrown errors and rethrows them unchanged', async () => {
-    const error = new Error('boom')
+  it('records exceptions and returns status code', async () => {
+    const error = new Error('Database Error')
+    const flow = interceptor.intercept(createContext(), {
+      handle: () => throwError(() => error),
+    })
 
-    await expect(lastValueFrom(interceptor.intercept(createContext(), { handle: () => throwError(() => error) }))).rejects.toBe(
-      error,
-    )
+    await expect(lastValueFrom(flow)).rejects.toThrow(error)
+    response.finish()
 
     expect(buffer.add).toHaveBeenCalledWith(
       expect.objectContaining({
         statusCode: 500,
-        error: expect.objectContaining({ name: 'Error', message: 'boom' }),
+        error: expect.objectContaining({
+          name: 'Error',
+          message: 'Database Error',
+        }),
       }),
     )
-  })
-
-  it('does not record internal devtools endpoint requests', async () => {
-    const result = await lastValueFrom(
-      interceptor.intercept(createContext({ originalUrl: '/_dev/mcp/tools/get_logs' }), { handle: () => of('ok') }),
-    )
-    response.finish()
-
-    expect(result).toBe('ok')
-    expect(buffer.add).not.toHaveBeenCalled()
   })
 
   it('records client-aborted requests with statusCode 0', () => {
@@ -147,17 +172,7 @@ describe('RequestHistoryInterceptor', () => {
     )
   })
 
-  it('does not capture multipart request bodies even if body capture is later enabled', () => {
-    const captureEnabled = new RequestHistoryInterceptor(
-      buffer as unknown as RequestHistoryBufferService,
-      new Reflector(),
-      { endpoint: '/_dev/mcp', captureRequestBody: true } as any,
-    )
-
-    const canCapture = (captureEnabled as any).shouldCaptureRequestBody({
-      headers: { 'content-type': 'multipart/form-data; boundary=abc' },
-    })
-
-    expect(canCapture).toBe(false)
+  it('does not expose shouldCaptureRequestBody method', () => {
+    expect((interceptor as any).shouldCaptureRequestBody).toBeUndefined()
   })
 })

@@ -23,7 +23,7 @@ Currently available tools:
 
 `get_request_history` captures real HTTP traffic, including unmatched 404s, without recording request or response bodies by default. Internal `/_dev/mcp/*` calls are excluded so tool calls do not pollute the history.
 
-`get_config` is read-only and always masks values that look sensitive, including tokens, passwords, auth keys, private keys, and database URLs. Secret masking cannot be disabled.
+`get_config` is read-only and always masks values that look sensitive, including tokens, passwords, auth keys, private keys, and database URLs. Secret masking cannot be disabled. To retrieve entries from NestJS `ConfigService`, you must explicitly declare the keys you want to read in the `NESTJS_MCP_CONFIG_KEYS` environment variable as a comma-separated list (e.g. `APP_NAME,DB_HOST`).
 
 More tools may be added in future releases.
 
@@ -60,22 +60,16 @@ import { DevtoolsMcpModule } from '@nestjs-devtools-mcp/plugin'
 export class AppModule {}
 ```
 
-Request body capture is off by default. If you need it for local debugging, enable `DevtoolsMcpModule.register({ captureRequestBody: true })`; multipart bodies are never captured, and configuration secrets returned by `get_config` are always masked.
-
-Apply the custom logger in `main.ts` to allow context interception:
+The custom logger is automatically applied during application bootstrap. We recommend enabling `bufferLogs: true` in your `main.ts` to ensure startup logs are correctly captured:
 
 ```typescript
 import { NestFactory } from '@nestjs/core'
 import { AppModule } from './app.module'
-import { applyDevtoolsLogger } from '@nestjs-devtools-mcp/plugin'
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, {
     bufferLogs: true,
   })
-
-  // Activate DevTools logger
-  applyDevtoolsLogger(app)
 
   await app.listen(3000)
 }
@@ -98,6 +92,13 @@ Add the following to your AI Assistant's MCP settings (e.g., `claude_desktop_con
 ```
 
 _That's it! Restart your MCP client and ask your AI: "Fetch the latest logs from my NestJS application."_
+
+## Configuration & Discovery Environment Variables
+
+- `NESTJS_MCP_SCAN_START`: The starting port for scanning (default: `3000`).
+- `NESTJS_MCP_SCAN_END`: The ending port for scanning (default: `3010`).
+- `NESTJS_MCP_PREFIX`: Global API prefix (e.g., `/api`) if your application uses a global prefix (default: `''`).
+- `NESTJS_MCP_CONFIG_KEYS`: Comma-separated list of ConfigService keys to expose (e.g., `APP_NAME,DATABASE_HOST`). If not set, ConfigService keys will not be exposed reflectively.
 
 ---
 

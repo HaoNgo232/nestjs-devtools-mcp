@@ -24,14 +24,6 @@ export interface DevtoolsMcpOptions {
   requestHistorySize?: number
 
   /**
-   * Capture sanitized request bodies for local debugging.
-   * Disabled by default because request bodies often contain PII or large payloads.
-   * Multipart request bodies are never captured.
-   * @default false
-   */
-  captureRequestBody?: boolean
-
-  /**
    * Application name reported to the bridge for discovery.
    * Automatically detected from host app package.json by default.
    */

@@ -26,16 +26,18 @@ import { DevtoolsMcpModule } from '@nestjs-devtools-mcp/plugin'
 export class AppModule {}
 ```
 
-### 2. Apply Logger in `main.ts`
+### 2. Auto-applied Logger
+
+The `CustomLoggerService` is automatically applied during application bootstrap if `DevtoolsMcpModule` is registered.
+
+We recommend setting `bufferLogs: true` in your `main.ts` so that NestJS buffers startup logs until the plugin module is fully loaded:
 
 ```typescript
 import { NestFactory } from '@nestjs/core'
-import { applyDevtoolsLogger } from '@nestjs-devtools-mcp/plugin'
 import { AppModule } from './app.module'
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, { bufferLogs: true })
-  applyDevtoolsLogger(app)
   await app.listen(3000)
 }
 bootstrap()

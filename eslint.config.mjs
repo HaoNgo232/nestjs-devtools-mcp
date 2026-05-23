@@ -8,7 +8,7 @@ import globals from 'globals';
 export default tseslint.config(
   // Tắt lint cho các thư mục không cần thiết
   {
-    ignores: ['dist/**', 'node_modules/**', '.eslintrc.js', 'eslint.config.mjs'],
+    ignores: ['dist/**', 'node_modules/**', '.eslintrc.js', 'eslint.config.mjs', 'scratch/**'],
   },
   
   // Cấu hình cơ bản từ ESLint và TypeScript-ESLint

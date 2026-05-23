@@ -1,5 +1,6 @@
 import { Injectable, ConsoleLogger, LoggerService } from '@nestjs/common'
 import { LogBufferService } from './log-buffer.service'
+import { RequestContextService } from './request-context.service'
 
 /**
  * CustomLoggerService replaces the default NestJS Logger to:
@@ -11,6 +12,7 @@ export class CustomLoggerService extends ConsoleLogger implements LoggerService 
   constructor(
     private readonly bufferService: LogBufferService,
     context?: string,
+    private readonly contextService?: RequestContextService,
   ) {
     super(context || 'App')
   }
@@ -19,10 +21,12 @@ export class CustomLoggerService extends ConsoleLogger implements LoggerService 
    * Override the standard NestJS log method to simultaneously write to buffer and console
    */
   override log(message: unknown, context?: string) {
+    const requestId = this.contextService ? this.contextService.getRequestId() : null
     this.bufferService.add({
       level: 'log',
       message: this.formatMyMessage(message),
       context: context || this.context,
+      requestId,
     })
     super.log(message, context || '')
   }
@@ -31,11 +35,13 @@ export class CustomLoggerService extends ConsoleLogger implements LoggerService 
    * Override the standard NestJS error method
    */
   override error(message: unknown, trace?: string, context?: string) {
+    const requestId = this.contextService ? this.contextService.getRequestId() : null
     this.bufferService.add({
       level: 'error',
       message: this.formatMyMessage(message),
       context: context || this.context,
       trace,
+      requestId,
     })
     super.error(message, trace || '', context || '')
   }
@@ -44,10 +50,12 @@ export class CustomLoggerService extends ConsoleLogger implements LoggerService 
    * Override the standard NestJS warn method
    */
   override warn(message: unknown, context?: string) {
+    const requestId = this.contextService ? this.contextService.getRequestId() : null
     this.bufferService.add({
       level: 'warn',
       message: this.formatMyMessage(message),
       context: context || this.context,
+      requestId,
     })
     super.warn(message, context || '')
   }
@@ -56,10 +64,12 @@ export class CustomLoggerService extends ConsoleLogger implements LoggerService 
    * Override the standard NestJS debug method
    */
   override debug(message: unknown, context?: string) {
+    const requestId = this.contextService ? this.contextService.getRequestId() : null
     this.bufferService.add({
       level: 'debug',
       message: this.formatMyMessage(message),
       context: context || this.context,
+      requestId,
     })
     super.debug(message, context || '')
   }
@@ -68,10 +78,12 @@ export class CustomLoggerService extends ConsoleLogger implements LoggerService 
    * Override the standard NestJS verbose method
    */
   override verbose(message: unknown, context?: string) {
+    const requestId = this.contextService ? this.contextService.getRequestId() : null
     this.bufferService.add({
       level: 'verbose',
       message: this.formatMyMessage(message),
       context: context || this.context,
+      requestId,
     })
     super.verbose(message, context || '')
   }

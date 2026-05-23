@@ -51,6 +51,12 @@ describe('LogCollector', () => {
     expect(mockLogBuffer.getLogs).toHaveBeenCalledWith(10, 'error')
   })
 
+  it('should forward explicit requestId to LogBufferService', async () => {
+    await collector.execute({ lines: 10, level: 'error', requestId: 'req-123' })
+
+    expect(mockLogBuffer.getLogs).toHaveBeenCalledWith(10, 'error', 'req-123')
+  })
+
   // ── Response shape ────────────────────────────────────────
 
   it('should return CollectorResult with correct toolName and data shape', async () => {

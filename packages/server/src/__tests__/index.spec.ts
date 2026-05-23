@@ -162,7 +162,7 @@ describe('MCP Bridge Entry Point (index.ts)', () => {
       const result = await callToolHandler({
         params: {
           name: 'get_logs',
-          arguments: { port: 3000, lines: 10 },
+          arguments: { port: 3000, lines: 10, requestId: 'req-123' },
         },
       })
 
@@ -170,6 +170,7 @@ describe('MCP Bridge Entry Point (index.ts)', () => {
       expect(devtoolsProxy.callPluginTool).toHaveBeenCalledWith(3000, 'get_logs', {
         lines: 10,
         level: undefined,
+        requestId: 'req-123',
       })
       expect(JSON.parse(result.content[0].text)).toEqual({ logs: [] })
     })
@@ -206,6 +207,7 @@ describe('MCP Bridge Entry Point (index.ts)', () => {
             pathContains: '/api',
             minDurationMs: 100,
             onlyErrors: true,
+            requestId: 'req-456',
           },
         },
       })
@@ -219,6 +221,7 @@ describe('MCP Bridge Entry Point (index.ts)', () => {
         pathContains: '/api',
         minDurationMs: 100,
         onlyErrors: true,
+        requestId: 'req-456',
       })
       expect(JSON.parse(result.content[0].text)).toEqual({ entries: [] })
     })

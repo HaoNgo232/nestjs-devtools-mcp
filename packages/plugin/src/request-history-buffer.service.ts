@@ -12,6 +12,7 @@ export interface RequestHistoryFilters {
   pathContains?: string
   minDurationMs?: number
   onlyErrors?: boolean
+  requestId?: string | null
 }
 
 @Injectable()
@@ -75,6 +76,10 @@ export class RequestHistoryBufferService {
 
     if (filters.onlyErrors === true) {
       entries = entries.filter((entry) => entry.error !== null || entry.statusCode >= 400 || entry.statusCode === 0)
+    }
+
+    if (filters.requestId !== undefined) {
+      entries = entries.filter((entry) => entry.requestId === filters.requestId)
     }
 
     return entries.slice(-limit)

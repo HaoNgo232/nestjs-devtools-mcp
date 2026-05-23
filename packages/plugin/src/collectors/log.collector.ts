@@ -23,8 +23,10 @@ export class LogCollector implements DevtoolsCollector {
     // Moved filtering logic from Controller to here
     const lines = typeof params.lines === 'number' ? params.lines : 50
     const level = typeof params.level === 'string' ? params.level : 'all'
+    const requestId = typeof params.requestId === 'string' ? params.requestId : undefined
 
-    const entries = this.logBuffer.getLogs(lines, level)
+    const entries =
+      requestId !== undefined ? this.logBuffer.getLogs(lines, level, requestId) : this.logBuffer.getLogs(lines, level)
     const stats = this.logBuffer.getStats()
 
     return {

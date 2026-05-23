@@ -216,14 +216,47 @@ describe('discoverServers', () => {
     await discoverServers(3000, 3000) // chỉ scan 1 port (3000)
 
     /**
-     * Assert: Với logic Zero-Config, Discovery thử 3 prefix:
-     * ['', '/api', '/v1'] cho mỗi port.
-     * Vì đã mock execSync trả về rỗng, tổng cộng có 3 lần gọi cho port 3000.
+     * Assert: Với logic rút gọn Discovery chỉ thử 1 prefix cho mỗi port.
      */
-    expect(mockFetch).toHaveBeenCalledTimes(3)
+    expect(mockFetch).toHaveBeenCalledTimes(1)
     const callArgs = mockFetch.mock.calls[0]
     expect(callArgs[0]).toBe('http://localhost:3000/_dev/mcp/health')
     expect(callArgs[1]).toHaveProperty('signal')
+  })
+
+  describe('discoverServers — single prefix scan', () => {
+    it('should only probe root prefix by default (no /api, /v1)', async () => {
+      mockFetch.mockRejectedValue(new Error('ECONNREFUSED'))
+      mockExecSync.mockReturnValue('')
+
+      await discoverServers(3000, 3000)
+
+      // Only 1 fetch per port (was 3 with multi-prefix)
+      expect(mockFetch).toHaveBeenCalledTimes(1)
+      expect(mockFetch).toHaveBeenCalledWith('http://localhost:3000/_dev/mcp/health', expect.anything())
+    })
+
+    it('respects NESTJS_MCP_PREFIX env var when set', async () => {
+      process.env.NESTJS_MCP_PREFIX = '/api'
+      mockFetch.mockRejectedValue(new Error('ECONNREFUSED'))
+      mockExecSync.mockReturnValue('')
+
+      await discoverServers(3000, 3000)
+
+      expect(mockFetch).toHaveBeenCalledWith('http://localhost:3000/api/_dev/mcp/health', expect.anything())
+      delete process.env.NESTJS_MCP_PREFIX
+    })
+
+    it('normalizes prefix without trailing slash', async () => {
+      process.env.NESTJS_MCP_PREFIX = 'api/'
+      mockFetch.mockRejectedValue(new Error('ECONNREFUSED'))
+      mockExecSync.mockReturnValue('')
+
+      await discoverServers(3000, 3000)
+
+      expect(mockFetch).toHaveBeenCalledWith('http://localhost:3000/api/_dev/mcp/health', expect.anything())
+      delete process.env.NESTJS_MCP_PREFIX
+    })
   })
 
   // ─────────────────────────────────────────────────────

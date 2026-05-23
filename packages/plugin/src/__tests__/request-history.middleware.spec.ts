@@ -5,6 +5,7 @@ import { RequestHistoryBufferService } from '../request-history-buffer.service'
 
 describe('RequestHistoryMiddleware', () => {
   let add: jest.Mock
+  let contextService: any
   let middleware: RequestHistoryMiddleware
 
   function createResponse(statusCode = 200, headers: Record<string, string> = {}) {
@@ -23,14 +24,19 @@ describe('RequestHistoryMiddleware', () => {
 
   beforeEach(() => {
     add = jest.fn()
+    contextService = {
+      run: jest.fn((id, cb) => cb()),
+      getRequestId: jest.fn().mockReturnValue('mock-id'),
+    }
     middleware = new RequestHistoryMiddleware(
       { add } as unknown as RequestHistoryBufferService,
       { endpoint: '/_dev/mcp' },
+      contextService,
     )
   })
 
-  it('records unmatched requests after response finish', () => {
-    const request = {
+  it('records unmatched requests after response finish with requestId', () => {
+    const request: any = {
       method: 'GET',
       originalUrl: '/missing?debug=true',
       ip: '127.0.0.1',
@@ -45,6 +51,8 @@ describe('RequestHistoryMiddleware', () => {
     response.emit('finish')
 
     expect(next).toHaveBeenCalled()
+    expect(contextService.run).toHaveBeenCalledWith(expect.any(String), expect.any(Function))
+    expect(request.requestId).toBeDefined()
     expect(add).toHaveBeenCalledWith(
       expect.objectContaining({
         method: 'GET',
@@ -55,6 +63,7 @@ describe('RequestHistoryMiddleware', () => {
         handlerName: null,
         responseSize: 82,
         error: { name: 'HttpError', message: 'HTTP 404', stack: null },
+        requestId: request.requestId,
       }),
     )
   })

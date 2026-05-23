@@ -2,7 +2,9 @@ import { RequestHistoryEntry } from '../contracts/mcp-api.contract'
 import { RequestHistoryBufferService } from '../request-history-buffer.service'
 
 describe('RequestHistoryBufferService', () => {
-  const makeEntry = (overrides: Partial<RequestHistoryEntry> = {}): Omit<RequestHistoryEntry, 'timestamp'> & {
+  const makeEntry = (
+    overrides: Partial<RequestHistoryEntry> = {},
+  ): Omit<RequestHistoryEntry, 'timestamp'> & {
     timestamp?: number
   } => ({
     timestamp: 1000,
@@ -61,6 +63,17 @@ describe('RequestHistoryBufferService', () => {
     expect(service.filter({ statusClass: '2xx' })).toHaveLength(2)
     expect(service.filter({ pathContains: 'slow', minDurationMs: 200 })).toHaveLength(1)
     expect(service.filter({ onlyErrors: true }).map((entry) => entry.statusCode)).toEqual([500])
+  })
+
+  it('filters by requestId', () => {
+    const service = new RequestHistoryBufferService({ requestHistorySize: 10 } as any)
+
+    service.add(makeEntry({ path: '/req1', requestId: 'req-1' }))
+    service.add(makeEntry({ path: '/req2', requestId: 'req-2' }))
+    service.add(makeEntry({ path: '/req3', requestId: null }))
+
+    expect(service.filter({ requestId: 'req-1' }).map((entry) => entry.path)).toEqual(['/req1'])
+    expect(service.filter({ requestId: null }).map((entry) => entry.path)).toEqual(['/req3'])
   })
 
   it('returns newest entries when limit is provided', () => {

@@ -115,8 +115,7 @@ import { DevtoolsMcpModule } from '@nestjs-devtools-mcp/plugin';
 })
 export class AppModule {}
 ```
-
-`captureRequestBody` defaults to `false`. Enable `DevtoolsMcpModule.register({ captureRequestBody: true })` only for local debugging; multipart bodies are never captured. Configuration values that look like secrets are masked before they are returned by `get_config`, and masking cannot be disabled.
+Configuration values that look like secrets are masked before they are returned by `get_config`, and masking cannot be disabled.
 
 ### Step 4: Configure MCP Client to use Local Bridge
 Instead of using `npx`, point your MCP client directly to the compiled entry point of your local server package:
@@ -135,9 +134,11 @@ Instead of using `npx`, point your MCP client directly to the compiled entry poi
 
 ## Troubleshooting & Notes
 
-- **Port Range**: The Bridge CLI automatically scans ports `3000-3010`. If your NestJS app runs on a different port, ensure it falls within this range. Custom port configuration may be supported in a future release.
+- **Port Range & Environment Variables**: The Bridge CLI scans ports `3000-3010` by default. You can customize the scan range using `NESTJS_MCP_SCAN_START` and `NESTJS_MCP_SCAN_END` environment variables.
+- **Custom Global Prefix**: If your application uses a global route prefix (e.g. `app.setGlobalPrefix('api')`), configure the bridge to scan this prefix using the `NESTJS_MCP_PREFIX` environment variable (e.g. `NESTJS_MCP_PREFIX=api`).
 - **Security Check**: The plugin only allows connections from `127.0.0.1` and `::1`. If you are running inside a container, ensure the network mode is `host` or the bridge IP is correctly mapped (refer to `LocalhostOnlyGuard` for implementation details).
 - **Production Mode**: The plugin is disabled by default if `NODE_ENV === 'production'`. To force enable it (not recommended), use `DevtoolsMcpModule.register({ disabled: false })`.
-- **Request Bodies and Config Secrets**: Request body capture is off by default, should only be enabled for local debugging, and never captures multipart payloads. The config tool masks values that look like secrets.
+- **Config Secrets**: The config tool masks values that look like secrets before returning them, which cannot be disabled.
+- **Config Service Keys**: By default, `get_config` does not read from NestJS `ConfigService` to prevent accidental exposure of variables. You must explicitly declare the keys you want to expose in the `NESTJS_MCP_CONFIG_KEYS` environment variable as a comma-separated list (e.g. `NESTJS_MCP_CONFIG_KEYS=APP_NAME,DATABASE_HOST`).
 - **Request History Scope**: `get_request_history` records HTTP traffic only. It does not capture WebSocket, gRPC, or Nest microservice transports.
 - **Config Scope**: `get_config` is read-only. It does not modify runtime config and does not fetch values from databases, Redis, or external config stores.

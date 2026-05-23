@@ -1,5 +1,14 @@
-import { Module, DynamicModule, Global, Logger, MiddlewareConsumer, NestModule, RequestMethod } from '@nestjs/common'
-import { APP_INTERCEPTOR, DiscoveryModule, Reflector } from '@nestjs/core'
+import {
+  Module,
+  DynamicModule,
+  Global,
+  Logger,
+  MiddlewareConsumer,
+  NestModule,
+  RequestMethod,
+  OnApplicationBootstrap,
+} from '@nestjs/common'
+import { APP_INTERCEPTOR, DiscoveryModule, Reflector, NestApplicationContext, NestApplication } from '@nestjs/core'
 import * as fs from 'fs'
 import * as path from 'path'
 import { DEVTOOLS_OPTIONS_TOKEN, DevtoolsMcpOptions } from './devtools-mcp.options'
@@ -14,6 +23,48 @@ import { LogCollector } from './collectors/log.collector'
 import { RouteCollector } from './collectors/route.collector'
 import { RequestHistoryCollector } from './collectors/request-history.collector'
 import { ConfigCollector } from './collectors/config.collector'
+import { RequestContextService } from './request-context.service'
+
+// Auto-patch NestApplicationContext prototype to apply CustomLoggerService on init
+let prototypePatched = false
+
+interface NestAppContextLike {
+  get: (token: unknown) => unknown
+  useLogger: (logger: unknown) => void
+}
+
+function patchNestApplicationPrototype() {
+  if (prototypePatched) {
+    return
+  }
+  prototypePatched = true
+
+  try {
+    const classesToPatch = [NestApplicationContext, NestApplication].filter(Boolean)
+
+    for (const cls of classesToPatch) {
+      if (cls && cls.prototype && typeof cls.prototype.init === 'function') {
+        const originalInit = cls.prototype.init
+        cls.prototype.init = async function (this: NestAppContextLike, ...args: unknown[]) {
+          try {
+            const customLogger = this.get(CustomLoggerService)
+            if (customLogger) {
+              this.useLogger(customLogger)
+              DevtoolsMcpModule.loggerApplied = true
+            }
+          } catch (_err) {
+            // Ignore
+          }
+          return originalInit.apply(this, args as Parameters<typeof originalInit>)
+        }
+      }
+    }
+  } catch (_err) {
+    // Fail-safe
+  }
+}
+
+patchNestApplicationPrototype()
 
 /**
  * DevtoolsMcpModule is designed to be embedded in a NestJS App.
@@ -21,8 +72,9 @@ import { ConfigCollector } from './collectors/config.collector'
  */
 @Global()
 @Module({})
-export class DevtoolsMcpModule implements NestModule {
+export class DevtoolsMcpModule implements NestModule, OnApplicationBootstrap {
   private static readonly logger = new Logger('DevtoolsMcp')
+  static loggerApplied = false
 
   /**
    * Helper function to detect project name from host application.
@@ -59,7 +111,6 @@ export class DevtoolsMcpModule implements NestModule {
       disabled: process.env.NODE_ENV === 'production',
       logBufferSize: 500,
       requestHistorySize: 100,
-      captureRequestBody: false,
       name: this.getProjectName(),
       ...options,
     }
@@ -80,15 +131,16 @@ export class DevtoolsMcpModule implements NestModule {
           provide: DEVTOOLS_OPTIONS_TOKEN,
           useValue: defaultOptions,
         },
+        RequestContextService,
         LogBufferService,
         RequestHistoryBufferService,
         RequestHistoryMiddleware,
         {
           provide: CustomLoggerService,
-          useFactory: (bufferService: LogBufferService) => {
-            return new CustomLoggerService(bufferService)
+          useFactory: (bufferService: LogBufferService, contextService: RequestContextService) => {
+            return new CustomLoggerService(bufferService, 'App', contextService)
           },
-          inject: [LogBufferService],
+          inject: [LogBufferService, RequestContextService],
         },
         RequestHistoryInterceptor,
         {
@@ -111,11 +163,22 @@ export class DevtoolsMcpModule implements NestModule {
         },
       ],
       controllers: [DevtoolsMcpController],
-      exports: [LogBufferService, RequestHistoryBufferService, CustomLoggerService],
+      exports: [LogBufferService, RequestHistoryBufferService, CustomLoggerService, RequestContextService],
     }
   }
 
   configure(consumer: MiddlewareConsumer) {
     consumer.apply(RequestHistoryMiddleware).forRoutes({ path: '*path', method: RequestMethod.ALL })
+  }
+
+  onApplicationBootstrap() {
+    setTimeout(() => {
+      if (!DevtoolsMcpModule.loggerApplied) {
+        console.warn(
+          '[DevtoolsMcp] CustomLoggerService was not automatically applied. ' +
+            'Please ensure that you have not overridden the logger after importing DevtoolsMcpModule.',
+        )
+      }
+    }, 100)
   }
 }

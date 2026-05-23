@@ -26,9 +26,7 @@ export interface ConfigCollectorData {
 }
 
 interface ConfigServiceLike {
-  readonly internalConfig?: unknown
-  readonly _internalConfig?: unknown
-  readonly config?: unknown
+  get?(key: string): unknown
 }
 
 interface ConfigCollectorParams {
@@ -157,7 +155,14 @@ export class ConfigCollector implements DevtoolsCollector<ConfigCollectorData> {
 
   private createEnvEntry(key: string, value: string | undefined): ConfigEntry {
     if (value === undefined || value === '') {
-      return { source: 'env', key, status: 'empty', masked: false, value: null, type: value === undefined ? 'undefined' : 'string' }
+      return {
+        source: 'env',
+        key,
+        status: 'empty',
+        masked: false,
+        value: null,
+        type: value === undefined ? 'undefined' : 'string',
+      }
     }
 
     if (this.shouldMask(key, value)) {
@@ -182,18 +187,41 @@ export class ConfigCollector implements DevtoolsCollector<ConfigCollectorData> {
       }
     }
 
-    const configData = this.getReadableConfigData(configService)
-    if (!configData) {
+    if (typeof configService.get !== 'function') {
+      return {
+        available: false,
+        entries: [],
+        warning: 'ConfigService is available, but does not expose a get() method.',
+      }
+    }
+
+    const keysStr = process.env.NESTJS_MCP_CONFIG_KEYS
+    if (!keysStr || keysStr.trim() === '') {
       return {
         available: true,
         entries: [],
-        warning: 'ConfigService is available, but no readable internal configuration data was found.',
+        warning: 'ConfigService is available, but no keys are declared in NESTJS_MCP_CONFIG_KEYS environment variable.',
+      }
+    }
+
+    const keys = keysStr
+      .split(',')
+      .map((k) => k.trim())
+      .filter((k) => k !== '')
+
+    const entries: ConfigEntry[] = []
+    for (const key of keys) {
+      try {
+        const val = configService.get(key)
+        entries.push(this.createConfigEntry(key, val))
+      } catch (_err) {
+        // Prevent single key error from failing the whole collection
       }
     }
 
     return {
       available: true,
-      entries: this.flattenConfig(configData),
+      entries: entries.sort((a, b) => a.key.localeCompare(b.key)),
     }
   }
 
@@ -230,64 +258,6 @@ export class ConfigCollector implements DevtoolsCollector<ConfigCollectorData> {
     }
 
     return tokens
-  }
-
-  private getReadableConfigData(configService: ConfigServiceLike): unknown {
-    if (this.isReadableObject(configService.internalConfig)) {
-      return configService.internalConfig
-    }
-
-    if (this.isReadableObject(configService._internalConfig)) {
-      return configService._internalConfig
-    }
-
-    if (this.isReadableObject(configService.config)) {
-      return configService.config
-    }
-
-    for (const key of Object.keys(configService)) {
-      const value = (configService as Record<string, unknown>)[key]
-      if (this.isReadableObject(value)) {
-        return value
-      }
-    }
-
-    return undefined
-  }
-
-  private isReadableObject(value: unknown): value is Record<string, unknown> {
-    return typeof value === 'object' && value !== null
-  }
-
-  private flattenConfig(value: unknown): ConfigEntry[] {
-    const entries: ConfigEntry[] = []
-    this.flattenValue(value, '', entries, new WeakSet<object>())
-    return entries.sort((a, b) => a.key.localeCompare(b.key))
-  }
-
-  private flattenValue(value: unknown, key: string, entries: ConfigEntry[], seen: WeakSet<object>): void {
-    if (!key && this.isPlainObject(value)) {
-      for (const [childKey, childValue] of Object.entries(value)) {
-        this.flattenValue(childValue, childKey, entries, seen)
-      }
-      return
-    }
-
-    if (this.isPlainObject(value)) {
-      if (seen.has(value)) {
-        entries.push(this.createConfigEntry(key, CIRCULAR_VALUE))
-        return
-      }
-
-      seen.add(value)
-      for (const [childKey, childValue] of Object.entries(value)) {
-        this.flattenValue(childValue, `${key}.${childKey}`, entries, seen)
-      }
-      seen.delete(value)
-      return
-    }
-
-    entries.push(this.createConfigEntry(key, value))
   }
 
   private createConfigEntry(key: string, value: unknown): ConfigEntry {

@@ -52,6 +52,7 @@ describe('RequestHistoryCollector', () => {
       pathContains: undefined,
       minDurationMs: undefined,
       onlyErrors: false,
+      requestId: undefined,
     })
   })
 
@@ -74,6 +75,7 @@ describe('RequestHistoryCollector', () => {
       pathContains: '/users',
       minDurationMs: 100,
       onlyErrors: true,
+      requestId: undefined,
     })
     expect(mockBuffer.count).toHaveBeenCalledWith({
       method: 'POST',
@@ -82,6 +84,33 @@ describe('RequestHistoryCollector', () => {
       pathContains: '/users',
       minDurationMs: 100,
       onlyErrors: true,
+      requestId: undefined,
+    })
+  })
+
+  it('forwards requestId filter', async () => {
+    await collector.execute({
+      requestId: 'req-123',
+    })
+
+    expect(mockBuffer.filter).toHaveBeenCalledWith({
+      limit: 50,
+      method: undefined,
+      statusCode: undefined,
+      statusClass: undefined,
+      pathContains: undefined,
+      minDurationMs: undefined,
+      onlyErrors: false,
+      requestId: 'req-123',
+    })
+    expect(mockBuffer.count).toHaveBeenCalledWith({
+      method: undefined,
+      statusCode: undefined,
+      statusClass: undefined,
+      pathContains: undefined,
+      minDurationMs: undefined,
+      onlyErrors: false,
+      requestId: 'req-123',
     })
   })
 

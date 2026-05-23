@@ -7,6 +7,7 @@ export interface LogEntry {
   message: string
   context?: string
   trace?: string
+  requestId?: string | null
 }
 
 @Injectable()
@@ -41,12 +42,16 @@ export class LogBufferService {
    * Get logs from the buffer based on filtering criteria
    * @param lines Maximum number of log lines to retrieve
    * @param level Filter by log level
+   * @param requestId Filter by correlation ID
    * @returns List of log entries
    */
-  getLogs(lines = 50, level: string = 'all'): LogEntry[] {
+  getLogs(lines = 50, level: string = 'all', requestId?: string | null): LogEntry[] {
     let filtered = this.buffer
     if (level !== 'all') {
       filtered = this.buffer.filter((e) => e.level === level)
+    }
+    if (requestId !== undefined) {
+      filtered = filtered.filter((e) => e.requestId === requestId)
     }
     return filtered.slice(-lines)
   }
