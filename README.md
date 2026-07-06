@@ -280,7 +280,6 @@ pnpm ci
 
 ## Documentation
 
-- [Installation Guide](./docs/installation.md)
 - [Development Guide](./docs/development.md)
 - [Plugin Package](./packages/plugin/README.md)
 - [Bridge Package](./packages/server/README.md)
