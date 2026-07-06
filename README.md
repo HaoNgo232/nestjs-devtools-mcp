@@ -20,6 +20,8 @@ Currently available tools:
 - `get_routes` — List registered HTTP routes (method, path, controller, handler).
 - `get_request_history` — Retrieve recent HTTP request history with filters for method, status, path, duration, and errors.
 - `get_config` — Retrieve sanitized runtime configuration from environment variables and ConfigService.
+- `get_errors` — Retrieve recent runtime errors categorized by source (`bootstrap`, `runtime`, `unhandled`, `http-5xx`).
+
 
 `get_request_history` captures real HTTP traffic, including unmatched 404s, without recording request or response bodies by default. Internal `/_dev/mcp/*` calls are excluded so tool calls do not pollute the history.
 

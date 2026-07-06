@@ -7,8 +7,16 @@ import {
   NestModule,
   RequestMethod,
   OnApplicationBootstrap,
+  OnApplicationShutdown,
 } from '@nestjs/common'
-import { APP_INTERCEPTOR, DiscoveryModule, Reflector, NestApplicationContext, NestApplication } from '@nestjs/core'
+import {
+  APP_INTERCEPTOR,
+  DiscoveryModule,
+  Reflector,
+  NestApplicationContext,
+  NestApplication,
+  ModuleRef,
+} from '@nestjs/core'
 import * as fs from 'fs'
 import * as path from 'path'
 import { DEVTOOLS_OPTIONS_TOKEN, DevtoolsMcpOptions } from './devtools-mcp.options'
@@ -23,6 +31,9 @@ import { LogCollector } from './collectors/log.collector'
 import { RouteCollector } from './collectors/route.collector'
 import { RequestHistoryCollector } from './collectors/request-history.collector'
 import { ConfigCollector } from './collectors/config.collector'
+import { ErrorCollector } from './collectors/error.collector'
+import { ErrorBufferService } from './error-buffer.service'
+import { UnhandledErrorListener } from './unhandled-error.listener'
 import { RequestContextService } from './request-context.service'
 
 // Auto-patch NestApplicationContext prototype to apply CustomLoggerService on init
@@ -55,7 +66,20 @@ function patchNestApplicationPrototype() {
           } catch (_err) {
             // Ignore
           }
-          return originalInit.apply(this, args as Parameters<typeof originalInit>)
+
+          try {
+            return await originalInit.apply(this, args as Parameters<typeof originalInit>)
+          } catch (bootstrapError) {
+            try {
+              const listener = this.get(UnhandledErrorListener) as UnhandledErrorListener | undefined
+              if (listener) {
+                listener.captureBootstrapError(bootstrapError, 'Bootstrap')
+              }
+            } catch (_err) {
+              // Ignore
+            }
+            throw bootstrapError
+          }
         }
       }
     }
@@ -72,9 +96,11 @@ patchNestApplicationPrototype()
  */
 @Global()
 @Module({})
-export class DevtoolsMcpModule implements NestModule, OnApplicationBootstrap {
+export class DevtoolsMcpModule implements NestModule, OnApplicationBootstrap, OnApplicationShutdown {
   private static readonly logger = new Logger('DevtoolsMcp')
   static loggerApplied = false
+
+  constructor(private readonly moduleRef: ModuleRef) {}
 
   /**
    * Helper function to detect project name from host application.
@@ -111,6 +137,7 @@ export class DevtoolsMcpModule implements NestModule, OnApplicationBootstrap {
       disabled: process.env.NODE_ENV === 'production',
       logBufferSize: 500,
       requestHistorySize: 100,
+      errorBufferSize: 100,
       name: this.getProjectName(),
       ...options,
     }
@@ -134,6 +161,8 @@ export class DevtoolsMcpModule implements NestModule, OnApplicationBootstrap {
         RequestContextService,
         LogBufferService,
         RequestHistoryBufferService,
+        ErrorBufferService,
+        UnhandledErrorListener,
         RequestHistoryMiddleware,
         {
           provide: CustomLoggerService,
@@ -151,6 +180,7 @@ export class DevtoolsMcpModule implements NestModule, OnApplicationBootstrap {
         RouteCollector,
         RequestHistoryCollector,
         ConfigCollector,
+        ErrorCollector,
         Reflector,
         /**
          * Register collectors using factory to ensure they are always provided as an array.
@@ -159,11 +189,18 @@ export class DevtoolsMcpModule implements NestModule, OnApplicationBootstrap {
         {
           provide: DEVTOOLS_COLLECTORS,
           useFactory: (...collectors: DevtoolsCollector[]) => collectors,
-          inject: [LogCollector, RouteCollector, RequestHistoryCollector, ConfigCollector],
+          inject: [LogCollector, RouteCollector, RequestHistoryCollector, ConfigCollector, ErrorCollector],
         },
       ],
       controllers: [DevtoolsMcpController],
-      exports: [LogBufferService, RequestHistoryBufferService, CustomLoggerService, RequestContextService],
+      exports: [
+        LogBufferService,
+        RequestHistoryBufferService,
+        ErrorBufferService,
+        UnhandledErrorListener,
+        CustomLoggerService,
+        RequestContextService,
+      ],
     }
   }
 
@@ -172,6 +209,15 @@ export class DevtoolsMcpModule implements NestModule, OnApplicationBootstrap {
   }
 
   onApplicationBootstrap() {
+    try {
+      const listener = this.moduleRef.get(UnhandledErrorListener, { strict: false })
+      if (listener) {
+        listener.attach()
+      }
+    } catch (_err) {
+      // Ignore
+    }
+
     setTimeout(() => {
       if (!DevtoolsMcpModule.loggerApplied) {
         console.warn(
@@ -180,5 +226,16 @@ export class DevtoolsMcpModule implements NestModule, OnApplicationBootstrap {
         )
       }
     }, 100)
+  }
+
+  onApplicationShutdown() {
+    try {
+      const listener = this.moduleRef.get(UnhandledErrorListener, { strict: false })
+      if (listener) {
+        listener.detach()
+      }
+    } catch (_err) {
+      // Ignore
+    }
   }
 }

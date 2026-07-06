@@ -53,7 +53,8 @@ function buildRuntimeGuide() {
         args: ['-y', 'nestjs-devtools-mcp@latest'],
       },
     },
-    availableTools: ['discover_servers', 'get_logs', 'get_routes', 'get_request_history', 'get_config'],
+    availableTools: ['discover_servers', 'get_logs', 'get_routes', 'get_request_history', 'get_config', 'get_errors'],
+
     security: {
       localhostOnly: true,
       defaultProductionBehavior: 'plugin disabled when NODE_ENV=production unless explicitly enabled',
@@ -186,6 +187,45 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
             includeMasked: {
               type: 'boolean',
               description: 'Include keys whose values are masked because they look sensitive.',
+            },
+          },
+        },
+      },
+      {
+        name: 'get_errors',
+        description:
+          'Get recent runtime errors from NestJS app. Sources: bootstrap, runtime, unhandled, http-5xx. Useful for debugging crashes and 5xx errors.',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            port: {
+              type: 'number',
+              description: 'NestJS server port. Auto-detected if only one server is running.',
+            },
+            limit: {
+              type: 'number',
+              description: 'Number of entries (default 50, max 200)',
+            },
+            source: {
+              type: 'string',
+              enum: ['bootstrap', 'runtime', 'unhandled', 'http-5xx'],
+              description: 'Filter by error source.',
+            },
+            since: {
+              type: 'number',
+              description: 'Unix timestamp (ms). Only return errors after this time.',
+            },
+            requestId: {
+              type: 'string',
+              description: 'Filter by request correlation ID.',
+            },
+            onlyUnhandled: {
+              type: 'boolean',
+              description: 'Return only unhandled + bootstrap errors.',
+            },
+            includeStack: {
+              type: 'boolean',
+              description: 'Include stack traces (forced false in production).',
             },
           },
         },
@@ -363,6 +403,22 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         return {
           content: [{ type: 'text', text: JSON.stringify(configData, null, 2) }],
         }
+      }
+
+      case 'get_errors': {
+        const schema = z.object({
+          port: z.number().optional(),
+          limit: z.number().optional(),
+          source: z.enum(['bootstrap', 'runtime', 'unhandled', 'http-5xx']).optional(),
+          since: z.number().optional(),
+          requestId: z.string().nullable().optional(),
+          onlyUnhandled: z.boolean().optional(),
+          includeStack: z.boolean().optional(),
+        })
+        const { port, ...payload } = schema.parse(args || {})
+        const targetPort = await devtoolsProxy.resolvePort(port)
+        const errorData = await devtoolsProxy.callPluginTool(targetPort, 'get_errors', payload)
+        return { content: [{ type: 'text', text: JSON.stringify(errorData, null, 2) }] }
       }
 
       default:

@@ -76,9 +76,11 @@ async function runE2ETests() {
 
   try {
     // 1. Khởi chạy NestJS application trong test-nestjs-app
-    console.log('Step 1: Spawning NestJS App...')
     const appDir = path.resolve(__dirname, '../test-nestjs-app')
-    nestAppProcess = spawn('npx', ['ts-node', 'main.ts'], {
+    const tsNodeBin = path.resolve(appDir, 'node_modules/.bin/ts-node')
+    nestAppProcess = spawn(tsNodeBin, ['main.ts'], {
+
+
       cwd: appDir,
       env: {
         ...process.env,
@@ -99,11 +101,16 @@ async function runE2ETests() {
     await waitForNestJsReady()
     console.log('🟢 NestJS App is ready and running.')
 
-    // 2. Tạo một vài HTTP requests để có log và request history
-    console.log('Step 2: Sending mock HTTP traffic to NestJS...')
+    // 2. Tạo một vài HTTP requests để có log và request history và error history
+    console.log('Step 2: Sending mock HTTP traffic and triggering errors in NestJS...')
     await makeRequest('GET', '/hello')
     await makeRequest('POST', '/products', JSON.stringify({ name: 'E2E Product' }))
     await makeRequest('GET', '/notexist').catch(() => {}) // Sẽ sinh ra log 404
+    await makeRequest('GET', '/errors/runtime')
+    await makeRequest('GET', '/errors/5xx').catch(() => {})
+    await makeRequest('GET', '/errors/unhandled-rejection')
+    await new Promise((resolve) => setTimeout(resolve, 200)) // Đợi async rejection được ghi vào buffer
+
 
     // 3. Khởi chạy MCP Server sử dụng npx trỏ tới build local
     console.log('Step 3: Spawning MCP Server Bridge using npx...')
@@ -288,9 +295,44 @@ async function runE2ETests() {
       throw new Error(`QA-5 failed: JWT_SECRET not masked correctly. Value is: ${jwtSecretEntry?.value}`)
     }
 
-    console.log('✅ QA-5 PASS: Config sensitive keys masked successfully.')
+    // ==========================================
+    // QA-6: Test get_errors
+    // ==========================================
+    console.log('🔍 Executing QA-6: get_errors...')
+    const q6Response = await sendMcpCommand('tools/call', {
+      name: 'get_errors',
+      arguments: { port: NESTJS_PORT, includeStack: true },
+    })
 
-    console.log('\n🎉 ALL 5 QA E2E TESTS PASSED SUCCESSFULLY! 🎉\n')
+    if (q6Response.result?.isError) {
+      throw new Error(`QA-6 failed: get_errors returned error: ${q6Response.result.content[0].text}`)
+    }
+
+    const errorResult = JSON.parse(q6Response.result.content[0].text)
+    console.log('Get Errors Result:', errorResult)
+
+    const hasRuntime = errorResult.entries.some((e: any) => e.source === 'runtime' && e.message.includes('Custom runtime error'))
+    const has5xx = errorResult.entries.some((e: any) => e.source === 'http-5xx' && e.message.includes('Database connection failed'))
+    const hasUnhandled = errorResult.entries.some((e: any) => e.source === 'unhandled' && e.message.includes('Async unhandled rejection'))
+
+    if (!hasRuntime || !has5xx || !hasUnhandled) {
+      throw new Error(`QA-6 failed: Missing expected error entries. Runtime: ${hasRuntime}, 5xx: ${has5xx}, Unhandled: ${hasUnhandled}`)
+    }
+
+    // Lọc theo source: unhandled
+    const q6UnhandledResponse = await sendMcpCommand('tools/call', {
+      name: 'get_errors',
+      arguments: { port: NESTJS_PORT, source: 'unhandled' },
+    })
+    const unhandledResult = JSON.parse(q6UnhandledResponse.result.content[0].text)
+    const allAreUnhandled = unhandledResult.entries.every((e: any) => e.source === 'unhandled')
+    if (!allAreUnhandled || unhandledResult.entries.length === 0) {
+      throw new Error('QA-6 failed: Filter by source unhandled failed.')
+    }
+
+    console.log('✅ QA-6 PASS: get_errors retrieved and filtered errors from all sources correctly.')
+
+    console.log('\n🎉 ALL 6 QA E2E TESTS PASSED SUCCESSFULLY! 🎉\n')
   } catch (error) {
     console.error('❌ E2E QA Test failed:', error)
     process.exitCode = 1
@@ -307,3 +349,4 @@ async function runE2ETests() {
 }
 
 runE2ETests()
+

@@ -65,12 +65,13 @@ describe('MCP Bridge Entry Point (index.ts)', () => {
   describe('List Tools Handler', () => {
     it('should return the available tools list', async () => {
       const result = await listToolsHandler()
-      expect(result.tools).toHaveLength(5)
+      expect(result.tools).toHaveLength(6)
       expect(result.tools.map((t: any) => t.name)).toContain('discover_servers')
       expect(result.tools.map((t: any) => t.name)).toContain('get_logs')
       expect(result.tools.map((t: any) => t.name)).toContain('get_routes')
       expect(result.tools.map((t: any) => t.name)).toContain('get_request_history')
       expect(result.tools.map((t: any) => t.name)).toContain('get_config')
+      expect(result.tools.map((t: any) => t.name)).toContain('get_errors')
     })
   })
 
@@ -249,6 +250,47 @@ describe('MCP Bridge Entry Point (index.ts)', () => {
         includeMasked: true,
       })
       expect(JSON.parse(result.content[0].text)).toEqual({ entries: [] })
+    })
+
+    it('should handle get_errors tool with all filters', async () => {
+      jest.spyOn(devtoolsProxy, 'resolvePort').mockResolvedValue(3004)
+      jest.spyOn(devtoolsProxy, 'callPluginTool').mockResolvedValue({ entries: [] })
+
+      const result = await callToolHandler({
+        params: {
+          name: 'get_errors',
+          arguments: {
+            port: 3004,
+            limit: 25,
+            source: 'unhandled',
+            since: 1234567890,
+            requestId: 'req-9',
+            onlyUnhandled: true,
+            includeStack: false,
+          },
+        },
+      })
+
+      expect(devtoolsProxy.resolvePort).toHaveBeenCalledWith(3004)
+      expect(devtoolsProxy.callPluginTool).toHaveBeenCalledWith(3004, 'get_errors', {
+        limit: 25,
+        source: 'unhandled',
+        since: 1234567890,
+        requestId: 'req-9',
+        onlyUnhandled: true,
+        includeStack: false,
+      })
+      expect(JSON.parse(result.content[0].text)).toEqual({ entries: [] })
+    })
+
+    it('should validate source enum in get_errors', async () => {
+      const result = await callToolHandler({
+        params: {
+          name: 'get_errors',
+          arguments: { source: 'invalid-source' },
+        },
+      })
+      expect(result.isError).toBe(true)
     })
 
     it('should throw error for unsupported tool', async () => {

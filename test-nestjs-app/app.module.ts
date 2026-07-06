@@ -38,10 +38,35 @@ export class ProductsController {
   }
 }
 
+@Controller('errors')
+export class ErrorsController {
+  private readonly logger = new Logger('ErrorsController')
+
+  @Get('runtime')
+  triggerRuntimeError() {
+    this.logger.error('Custom runtime error logged via Nest Logger', 'Error: Stack trace simulated\n  at ErrorsController.triggerRuntimeError')
+    return { status: 'logged_runtime_error' }
+  }
+
+  @Get('5xx')
+  triggerHttp5xxError() {
+    throw new Error('Database connection failed - Simulated 500 error')
+  }
+
+  @Get('unhandled-rejection')
+  triggerUnhandledRejection() {
+    setTimeout(() => {
+      Promise.reject(new Error('Async unhandled rejection test error'))
+    }, 50)
+    return { status: 'triggered_unhandled_rejection' }
+  }
+}
+
 @Module({
   imports: [DevtoolsMcpModule.register()],
-  controllers: [HelloController, ProductsController],
+  controllers: [HelloController, ProductsController, ErrorsController],
 })
+
 export class AppModule {
   private readonly logger = new Logger('AppModule')
 

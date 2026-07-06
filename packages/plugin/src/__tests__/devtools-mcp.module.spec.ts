@@ -1,6 +1,8 @@
 import { Test, TestingModule } from '@nestjs/testing'
 import { DevtoolsMcpModule } from '../devtools-mcp.module'
 import { LogBufferService } from '../log-buffer.service'
+import { ErrorBufferService } from '../error-buffer.service'
+import { UnhandledErrorListener } from '../unhandled-error.listener'
 import { CustomLoggerService } from '../custom-logger.service'
 import { DEVTOOLS_COLLECTORS } from '../collectors/collector.interface'
 import { DevtoolsMcpController } from '../devtools-mcp.controller'
@@ -46,6 +48,18 @@ describe('DevtoolsMcpModule (Integration)', () => {
       expect(service).toBeInstanceOf(LogBufferService)
     })
 
+    it('should provide ErrorBufferService', () => {
+      const service = module.get(ErrorBufferService)
+      expect(service).toBeDefined()
+      expect(service).toBeInstanceOf(ErrorBufferService)
+    })
+
+    it('should provide UnhandledErrorListener', () => {
+      const listener = module.get(UnhandledErrorListener)
+      expect(listener).toBeDefined()
+      expect(listener).toBeInstanceOf(UnhandledErrorListener)
+    })
+
     it('should provide CustomLoggerService', () => {
       const service = module.get<CustomLoggerService>(CustomLoggerService)
       expect(service).toBeDefined()
@@ -57,16 +71,17 @@ describe('DevtoolsMcpModule (Integration)', () => {
       expect(collectors).toBeDefined()
     })
 
-    it('should include all enabled collectors in the collectors array', () => {
+    it('should include all 5 enabled collectors in the collectors array', () => {
       const controller = module.get<DevtoolsMcpController>(DevtoolsMcpController)
       const collectors = (controller as any).collectors
       expect(Array.isArray(collectors)).toBe(true)
-      expect(collectors.length).toBe(4)
+      expect(collectors.length).toBe(5)
 
       const logCollector = (collectors as any[]).find((c) => c.toolName === 'get_logs')
       const routeCollector = (collectors as any[]).find((c) => c.toolName === 'get_routes')
       const requestHistoryCollector = (collectors as any[]).find((c) => c.toolName === 'get_request_history')
       const configCollector = (collectors as any[]).find((c) => c.toolName === 'get_config')
+      const errorCollector = (collectors as any[]).find((c) => c.toolName === 'get_errors')
 
       expect(logCollector).toBeDefined()
       expect(logCollector.description).toBeTruthy()
@@ -76,6 +91,14 @@ describe('DevtoolsMcpModule (Integration)', () => {
       expect(requestHistoryCollector.description).toBeTruthy()
       expect(configCollector).toBeDefined()
       expect(configCollector.description).toBeTruthy()
+      expect(errorCollector).toBeDefined()
+      expect(errorCollector.description).toBeTruthy()
+    })
+
+    it('should expose get_errors in health endpoint tools list', () => {
+      const controller = module.get(DevtoolsMcpController)
+      const health = controller.getHealth()
+      expect(health.tools).toContain('get_errors')
     })
 
     it('should register DevtoolsMcpController', () => {

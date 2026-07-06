@@ -24,6 +24,12 @@ export interface DevtoolsMcpOptions {
   requestHistorySize?: number
 
   /**
+   * Maximum number of error entries stored in the buffer.
+   * @default 100
+   */
+  errorBufferSize?: number
+
+  /**
    * Application name reported to the bridge for discovery.
    * Automatically detected from host app package.json by default.
    */

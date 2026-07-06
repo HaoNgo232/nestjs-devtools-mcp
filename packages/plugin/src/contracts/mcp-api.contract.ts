@@ -124,3 +124,39 @@ export interface McpErrorResponse {
   readonly message: string
   readonly timestamp: string
 }
+
+/** Phân loại nguồn error */
+export type ErrorSource = 'bootstrap' | 'runtime' | 'unhandled' | 'http-5xx'
+
+/** Một entry error trong buffer */
+export interface McpErrorEntry {
+  readonly id: string
+  readonly timestamp: number
+  readonly source: ErrorSource
+  readonly name: string
+  readonly message: string
+  readonly stack: string | null
+  readonly context: string | null
+  readonly requestId: string | null
+  /** Link tới log entry liên quan (nếu error đến từ Logger), dùng để AI join data */
+  readonly relatedLogTimestamp: number | null
+}
+
+/** POST /_dev/mcp/tools/get_errors — Request body */
+export interface McpGetErrorsRequest {
+  readonly limit?: number
+  readonly source?: ErrorSource
+  readonly since?: number
+  readonly requestId?: string
+  readonly onlyUnhandled?: boolean
+  readonly includeStack?: boolean
+}
+
+/** POST /_dev/mcp/tools/get_errors — Response body */
+export interface McpGetErrorsResponse {
+  readonly entries: ReadonlyArray<McpErrorEntry>
+  readonly total: number
+  readonly bufferSize: number
+  readonly unhandledCount: number
+  readonly capturedSince: string | null
+}
