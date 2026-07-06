@@ -3,7 +3,7 @@
   "changelog": "@changesets/cli/changelog",
   "commit": false,
   "fixed": [
-    ["@nestjs-devtools-mcp/plugin", "nestjs-devtools-mcp", "demo-app"]
+    ["@nestjs-devtools-mcp/plugin", "nestjs-devtools-mcp"]
   ],
   "linked": [],
   "access": "public",
