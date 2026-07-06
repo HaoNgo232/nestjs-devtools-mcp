@@ -1,5 +1,19 @@
 import { discoverServers } from './discovery.js'
 
+function normalizePrefix(raw: string): string {
+  if (!raw) return ''
+
+  const trimmed = raw.trim()
+
+  if (trimmed === '/' || trimmed === '') {
+    return ''
+  }
+
+  const stripped = trimmed.replace(/^\/+/, '').replace(/\/+$/, '')
+
+  return stripped ? `/${stripped}` : ''
+}
+
 /**
  * Class for handling proxy requests from the MCP server to the plugin running in the NestJS app.
  */
@@ -37,7 +51,8 @@ export class DevToolsProxy {
    * Make an HTTP request to a specific plugin endpoint.
    */
   async callPluginTool(port: number, toolName: string, payload: unknown = {}): Promise<unknown> {
-    const url = `http://localhost:${port}/_dev/mcp/tools/${toolName}`
+    const prefix = normalizePrefix(process.env.NESTJS_MCP_PREFIX || '')
+    const url = `http://localhost:${port}${prefix}/_dev/mcp/tools/${toolName}`
     const response = await fetch(url, {
       method: 'POST',
       headers: {

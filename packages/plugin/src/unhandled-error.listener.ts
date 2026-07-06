@@ -4,7 +4,7 @@ import { ErrorBufferService } from './error-buffer.service'
 @Injectable()
 export class UnhandledErrorListener {
   private attached = false
-  private uncaughtHandler?: (err: unknown) => void
+  private uncaughtMonitorHandler?: (err: unknown) => void
   private rejectionHandler?: (reason: unknown, promise: Promise<unknown>) => void
 
   constructor(private readonly buffer: ErrorBufferService) {}
@@ -13,19 +13,24 @@ export class UnhandledErrorListener {
     if (this.attached) return
     this.attached = true
 
-    this.uncaughtHandler = (err: unknown) => this.record(err, 'unhandled', null)
+    this.uncaughtMonitorHandler = (err: unknown) => this.record(err, 'unhandled', null)
     this.rejectionHandler = (reason: unknown) => this.record(reason, 'unhandled', null)
 
-    process.on('uncaughtException', this.uncaughtHandler)
+    process.on('uncaughtExceptionMonitor', this.uncaughtMonitorHandler as NodeJS.UncaughtExceptionListener)
     process.on('unhandledRejection', this.rejectionHandler)
   }
 
   detach(): void {
     if (!this.attached) return
     this.attached = false
-    if (this.uncaughtHandler) process.removeListener('uncaughtException', this.uncaughtHandler)
+    if (this.uncaughtMonitorHandler) {
+      process.removeListener(
+        'uncaughtExceptionMonitor',
+        this.uncaughtMonitorHandler as NodeJS.UncaughtExceptionListener,
+      )
+    }
     if (this.rejectionHandler) process.removeListener('unhandledRejection', this.rejectionHandler)
-    this.uncaughtHandler = undefined
+    this.uncaughtMonitorHandler = undefined
     this.rejectionHandler = undefined
   }
 

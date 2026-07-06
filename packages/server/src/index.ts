@@ -46,7 +46,7 @@ function buildRuntimeGuide() {
       plugin: {
         package: '@nestjs-devtools-mcp/plugin',
         moduleImport: 'DevtoolsMcpModule.register()',
-        loggerHook: 'applyDevtoolsLogger(app)',
+        loggerHook: 'auto-applied',
       },
       mcpClient: {
         command: 'npx',
@@ -268,10 +268,10 @@ server.setRequestHandler(GetPromptRequestSchema, async (request) => {
             "import { DevtoolsMcpModule } from '@nestjs-devtools-mcp/plugin'",
             'imports: [DevtoolsMcpModule.register()]',
             '',
-            'Apply logger in main.ts:',
-            "import { applyDevtoolsLogger } from '@nestjs-devtools-mcp/plugin'",
+            'Bootstrap with buffered logs in main.ts:',
             'const app = await NestFactory.create(AppModule, { bufferLogs: true })',
-            'applyDevtoolsLogger(app)',
+            '',
+            'The DevTools logger is automatically applied when DevtoolsMcpModule is registered.',
             '',
             'Configure MCP client:',
             '{"command":"npx","args":["-y","nestjs-devtools-mcp@latest"]}',

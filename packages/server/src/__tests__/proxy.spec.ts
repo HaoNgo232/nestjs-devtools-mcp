@@ -261,4 +261,49 @@ describe('DevToolsProxy.callPluginTool', () => {
     const callArgs = mockFetch.mock.calls[0]
     expect(JSON.parse(callArgs[1].body)).toEqual({})
   })
+
+  it('respects NESTJS_MCP_PREFIX when calling plugin tools', async () => {
+    process.env.NESTJS_MCP_PREFIX = '/api'
+
+    mockFetch.mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: async () => ({ entries: [] }),
+    })
+
+    const proxy = new DevToolsProxy()
+
+    await proxy.callPluginTool(3000, 'get_logs', { lines: 10 })
+
+    expect(mockFetch).toHaveBeenCalledWith('http://localhost:3000/api/_dev/mcp/tools/get_logs', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ lines: 10 }),
+    })
+
+    delete process.env.NESTJS_MCP_PREFIX
+  })
+
+  it('normalizes NESTJS_MCP_PREFIX without duplicate slashes', async () => {
+    process.env.NESTJS_MCP_PREFIX = 'api/'
+
+    mockFetch.mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: async () => ({}),
+    })
+
+    const proxy = new DevToolsProxy()
+
+    await proxy.callPluginTool(3000, 'get_routes', {})
+
+    expect(mockFetch).toHaveBeenCalledWith(
+      'http://localhost:3000/api/_dev/mcp/tools/get_routes',
+      expect.objectContaining({
+        method: 'POST',
+      }),
+    )
+
+    delete process.env.NESTJS_MCP_PREFIX
+  })
 })

@@ -5,6 +5,7 @@ describe('UnhandledErrorListener', () => {
   let buffer: jest.Mocked<Pick<ErrorBufferService, 'add'>>
   let listener: UnhandledErrorListener
   let originalListeners: NodeJS.UncaughtExceptionListener[]
+  let originalMonitorListeners: NodeJS.UncaughtExceptionListener[]
   let originalRejectionListeners: NodeJS.UnhandledRejectionListener[]
 
   beforeEach(() => {
@@ -13,8 +14,10 @@ describe('UnhandledErrorListener', () => {
 
     // Save existing listeners to restore after test
     originalListeners = process.listeners('uncaughtException')
+    originalMonitorListeners = process.listeners('uncaughtExceptionMonitor' as any)
     originalRejectionListeners = process.listeners('unhandledRejection')
     process.removeAllListeners('uncaughtException')
+    process.removeAllListeners('uncaughtExceptionMonitor' as any)
     process.removeAllListeners('unhandledRejection')
   })
 
@@ -22,43 +25,47 @@ describe('UnhandledErrorListener', () => {
     listener.detach()
     // Restore original listeners
     process.removeAllListeners('uncaughtException')
+    process.removeAllListeners('uncaughtExceptionMonitor' as any)
     process.removeAllListeners('unhandledRejection')
     originalListeners.forEach((l) => process.on('uncaughtException', l))
+    originalMonitorListeners.forEach((l) => process.on('uncaughtExceptionMonitor' as any, l))
     originalRejectionListeners.forEach((l) => process.on('unhandledRejection', l))
   })
 
   describe('attach', () => {
-    it('registers uncaughtException and unhandledRejection listeners on process', () => {
+    it('registers uncaughtExceptionMonitor instead of uncaughtException to avoid changing crash semantics', () => {
       listener.attach()
-      expect(process.listenerCount('uncaughtException')).toBeGreaterThan(0)
+
+      expect(process.listenerCount('uncaughtExceptionMonitor')).toBeGreaterThan(0)
+      expect(process.listenerCount('uncaughtException')).toBe(0)
       expect(process.listenerCount('unhandledRejection')).toBeGreaterThan(0)
     })
 
     it('does not register duplicate listeners on double attach', () => {
       listener.attach()
-      const countAfterFirst = process.listenerCount('uncaughtException')
+      const countAfterFirst = process.listenerCount('uncaughtExceptionMonitor')
       listener.attach()
-      expect(process.listenerCount('uncaughtException')).toBe(countAfterFirst)
+      expect(process.listenerCount('uncaughtExceptionMonitor')).toBe(countAfterFirst)
     })
 
     it('is idempotent when attach then detach then attach again', () => {
       listener.attach()
       listener.detach()
       listener.attach()
-      expect(process.listenerCount('uncaughtException')).toBeGreaterThan(0)
+      expect(process.listenerCount('uncaughtExceptionMonitor')).toBeGreaterThan(0)
     })
   })
 
   describe('capture', () => {
-    it('captures uncaughtException into buffer with source "unhandled"', () => {
+    it('captures uncaughtExceptionMonitor into buffer with source "unhandled"', () => {
       listener.attach()
-      const err = new Error('boom-uncaught')
-      process.emit('uncaughtException', err)
+      const err = new Error('fatal-monitor-error')
+      process.emit('uncaughtExceptionMonitor' as any, err, 'uncaughtException')
       expect(buffer.add).toHaveBeenCalledWith(
         expect.objectContaining({
           source: 'unhandled',
           name: 'Error',
-          message: 'boom-uncaught',
+          message: 'fatal-monitor-error',
           stack: err.stack,
         }),
       )
@@ -78,7 +85,7 @@ describe('UnhandledErrorListener', () => {
 
     it('serializes non-Error thrown values (string, primitive)', () => {
       listener.attach()
-      process.emit('uncaughtException', 'string-error' as any)
+      process.emit('uncaughtExceptionMonitor' as any, 'string-error' as any, 'uncaughtException')
       expect(buffer.add).toHaveBeenCalledWith(
         expect.objectContaining({
           name: 'Error',
@@ -91,7 +98,7 @@ describe('UnhandledErrorListener', () => {
     it('does NOT swallow the error — re-throw is host app responsibility', () => {
       listener.attach()
       // Listener should not throw — it just records
-      expect(() => process.emit('uncaughtException', new Error('x'))).not.toThrow()
+      expect(() => process.emit('uncaughtExceptionMonitor' as any, new Error('x'), 'uncaughtException')).not.toThrow()
     })
 
     it('catches its own buffer.add errors silently (never crash host)', () => {
@@ -99,7 +106,7 @@ describe('UnhandledErrorListener', () => {
         throw new Error('buffer broken')
       })
       listener.attach()
-      expect(() => process.emit('uncaughtException', new Error('x'))).not.toThrow()
+      expect(() => process.emit('uncaughtExceptionMonitor' as any, new Error('x'), 'uncaughtException')).not.toThrow()
     })
   })
 
@@ -124,13 +131,23 @@ describe('UnhandledErrorListener', () => {
   })
 
   describe('detach', () => {
-    it('removes its own listeners but preserves host app listeners', () => {
+    it('detach removes its own uncaughtExceptionMonitor listener', () => {
+      listener.attach()
+      expect(process.listenerCount('uncaughtExceptionMonitor')).toBeGreaterThan(0)
+      listener.detach()
+      expect(process.listenerCount('uncaughtExceptionMonitor')).toBe(0)
+    })
+
+    it('does not remove or interfere with host uncaughtException listeners', () => {
       const hostListener = jest.fn()
       process.on('uncaughtException', hostListener)
+
       listener.attach()
       listener.detach()
-      expect(process.listenerCount('uncaughtException')).toBe(1) // only hostListener remains
+
       expect(process.listeners('uncaughtException')).toContain(hostListener)
+
+      process.removeListener('uncaughtException', hostListener)
     })
 
     it('is safe to call detach without prior attach', () => {

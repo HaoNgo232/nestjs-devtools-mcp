@@ -302,10 +302,64 @@ describe('ErrorCollector', () => {
     expect(result.data.entries.length).toBe(3)
   })
 
-  it('reports total = count of all matching errors (capped at 200 returned)', async () => {
-    mockErrorBuffer.count.mockReturnValue(250)
+  it('reports total across merged error buffer, runtime logs, and HTTP 5xx entries', async () => {
+    mockErrorBuffer.filter.mockReturnValue([
+      {
+        id: 'e1',
+        timestamp: 1000,
+        source: 'unhandled',
+        name: 'Error',
+        message: 'unhandled boom',
+        stack: null,
+        context: null,
+        requestId: null,
+        relatedLogTimestamp: null,
+      },
+    ] as any)
+
+    mockLogBuffer.getLogs.mockReturnValue([
+      {
+        timestamp: 2000,
+        level: 'error',
+        message: 'runtime boom',
+        context: 'App',
+        trace: null,
+        requestId: null,
+      },
+    ] as any)
+
+    mockRequestHistoryBuffer.filter.mockReturnValue([
+      {
+        timestamp: 3000,
+        method: 'GET',
+        path: '/fail',
+        routePattern: '/fail',
+        statusCode: 500,
+        durationMs: 10,
+        controllerName: 'FailController',
+        handlerName: 'fail',
+        ip: '127.0.0.1',
+        userAgent: 'jest',
+        requestSize: null,
+        responseSize: null,
+        error: { name: 'Error', message: 'http boom', stack: null },
+        requestId: null,
+      },
+    ] as any)
+
     const result = await collector.execute({})
-    expect(result.data.total).toBe(250)
+
+    expect(result.data.entries).toHaveLength(3)
+    expect(result.data.total).toBe(3)
+  })
+
+  it('does not use ErrorBufferService count as the only total source', async () => {
+    mockErrorBuffer.count.mockReturnValue(250)
+    mockErrorBuffer.filter.mockReturnValue([])
+
+    const result = await collector.execute({})
+
+    expect(result.data.total).toBe(0)
   })
 
   it('reports unhandledCount from ErrorBufferService stats', async () => {

@@ -21,7 +21,7 @@ export interface McpHealthResponse {
 
 /** A log line in the buffer */
 export interface McpLogEntry {
-  readonly timestamp: string
+  readonly timestamp: number
   readonly level: 'log' | 'error' | 'warn' | 'debug' | 'verbose'
   readonly context: string
   readonly message: string
@@ -30,16 +30,16 @@ export interface McpLogEntry {
 
 /** POST /_dev/mcp/tools/get_logs — Request body */
 export interface McpGetLogsRequest {
-  readonly limit?: number
-  readonly level?: McpLogEntry['level']
+  readonly lines?: number
+  readonly level?: McpLogEntry['level'] | 'all'
+  readonly requestId?: string | null
 }
 
 /** POST /_dev/mcp/tools/get_logs — Response body */
 export interface McpGetLogsResponse {
-  readonly server: string
-  readonly totalLogs: number
-  readonly returnedLogs: number
-  readonly logs: ReadonlyArray<McpLogEntry>
+  readonly entries: ReadonlyArray<McpLogEntry>
+  readonly total: number
+  readonly bufferSize: number
 }
 
 /** Route information returned by get_routes tool */

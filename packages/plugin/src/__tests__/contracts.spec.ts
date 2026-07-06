@@ -35,4 +35,36 @@ describe('Contracts Index', () => {
     }
     expect(reqSample.requestId).toBeDefined()
   })
+
+  it('McpGetLogsResponse contract matches actual collector response shape', () => {
+    const response: import('../contracts/mcp-api.contract').McpGetLogsResponse = {
+      entries: [
+        {
+          timestamp: Date.now(),
+          level: 'log',
+          context: 'App',
+          message: 'hello',
+          requestId: null,
+        },
+      ],
+      total: 1,
+      bufferSize: 500,
+    }
+
+    expect(response.entries).toHaveLength(1)
+    expect(response.total).toBe(1)
+    expect(response.bufferSize).toBe(500)
+  })
+
+  it('McpGetLogsRequest contract supports lines and requestId', () => {
+    const request: import('../contracts/mcp-api.contract').McpGetLogsRequest = {
+      lines: 20,
+      level: 'error',
+      requestId: 'req-123',
+    }
+
+    expect(request.lines).toBe(20)
+    expect(request.level).toBe('error')
+    expect(request.requestId).toBe('req-123')
+  })
 })

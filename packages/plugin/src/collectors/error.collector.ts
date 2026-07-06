@@ -53,6 +53,8 @@ export class ErrorCollector implements DevtoolsCollector<ErrorCollectorResponse>
     merged.push(...logEntries.map((e) => this.fromLogEntry(e)))
     merged.push(...httpEntries.filter((e) => e.statusCode >= 500).map((e) => this.fromHttpEntry(e)))
 
+    const total = merged.length
+
     // Sort by timestamp desc, cap at limit
     const limit = filters.limit ?? 50
     const sorted = merged.sort((a, b) => b.timestamp - a.timestamp).slice(0, limit)
@@ -61,7 +63,6 @@ export class ErrorCollector implements DevtoolsCollector<ErrorCollectorResponse>
     const finalEntries = includeStack ? sorted : sorted.map((e) => ({ ...e, stack: null }))
 
     const stats = this.errorBuffer.getStats()
-    const total = this.errorBuffer.count(this.withoutLimit(filters))
 
     return {
       toolName: this.toolName,
@@ -132,10 +133,5 @@ export class ErrorCollector implements DevtoolsCollector<ErrorCollectorResponse>
       requestId: entry.requestId ?? null,
       relatedLogTimestamp: null,
     }
-  }
-
-  private withoutLimit(filters: ErrorBufferFilters): Omit<ErrorBufferFilters, 'limit'> {
-    const { limit: _limit, ...rest } = filters
-    return rest
   }
 }
