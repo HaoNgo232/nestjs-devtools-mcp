@@ -23,7 +23,10 @@ Currently available tools:
 - `get_errors` — Retrieve recent runtime errors categorized by source (`bootstrap`, `runtime`, `unhandled`, `http-5xx`).
 
 
+`get_errors` retrieves recent runtime errors categorized by source (`bootstrap`, `runtime`, `unhandled`, `http-5xx`), complete with filtering and production stack trace masking.
+
 `get_request_history` captures real HTTP traffic, including unmatched 404s, without recording request or response bodies by default. Internal `/_dev/mcp/*` calls are excluded so tool calls do not pollute the history.
+
 
 `get_config` is read-only and always masks values that look sensitive, including tokens, passwords, auth keys, private keys, and database URLs. Secret masking cannot be disabled. To retrieve entries from NestJS `ConfigService`, you must explicitly declare the keys you want to read in the `NESTJS_MCP_CONFIG_KEYS` environment variable as a comma-separated list (e.g. `APP_NAME,DB_HOST`).
 

@@ -44,7 +44,10 @@ export class ErrorsController {
 
   @Get('runtime')
   triggerRuntimeError() {
-    this.logger.error('Custom runtime error logged via Nest Logger', 'Error: Stack trace simulated\n  at ErrorsController.triggerRuntimeError')
+    this.logger.error(
+      'Custom runtime error logged via Nest Logger',
+      'Error: Stack trace simulated\n  at ErrorsController.triggerRuntimeError',
+    )
     return { status: 'logged_runtime_error' }
   }
 
@@ -66,7 +69,6 @@ export class ErrorsController {
   imports: [DevtoolsMcpModule.register()],
   controllers: [HelloController, ProductsController, ErrorsController],
 })
-
 export class AppModule {
   private readonly logger = new Logger('AppModule')
 

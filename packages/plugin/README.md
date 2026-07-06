@@ -49,6 +49,9 @@ bootstrap()
 
 - Circular log buffering for AI agents.
 - Route introspection via `get_routes`.
+- Real-time HTTP request history via `get_request_history`.
+- Sanitized environment variable & ConfigService inspection via `get_config`.
+- Multi-source runtime error tracking (`bootstrap`, `runtime`, `unhandled`, `http-5xx`) via `get_errors`.
 - Transparent logger forwarding (keeps existing app log output).
 - Localhost-only MCP endpoint guard.
 - Production-safe by default (disabled when `NODE_ENV=production` unless explicitly overridden).
@@ -60,6 +63,10 @@ The plugin exposes a localhost-only endpoint inside your NestJS app:
 - `GET /_dev/mcp/health`
 - `POST /_dev/mcp/tools/get_logs`
 - `POST /_dev/mcp/tools/get_routes`
+- `POST /_dev/mcp/tools/get_request_history`
+- `POST /_dev/mcp/tools/get_config`
+- `POST /_dev/mcp/tools/get_errors`
+
 
 ## Notes
 

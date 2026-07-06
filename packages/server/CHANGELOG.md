@@ -1,6 +1,14 @@
 # nestjs-devtools-mcp
 
+## 0.3.0
+
+### Minor Changes
+
+- expose `get_errors` MCP tool through stdio bridge for querying runtime errors
+- mirror `get_errors` API contract types
+
 ## 0.2.3
+
 
 ### Patch Changes
 

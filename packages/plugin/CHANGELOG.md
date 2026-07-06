@@ -1,6 +1,16 @@
 # @nestjs-devtools-mcp/plugin
 
+## 0.3.0
+
+### Minor Changes
+
+- add `get_errors` tool for categorizing and retrieving runtime errors (`bootstrap`, `runtime`, `unhandled`, `http-5xx`)
+- add `ErrorBufferService` circular buffer for capturing uncaught exceptions, unhandled rejections, and bootstrap errors
+- add `UnhandledErrorListener` for process listener management and error serialization
+- support stack trace masking in production environment
+
 ## 0.2.3
+
 
 ### Patch Changes
 

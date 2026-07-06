@@ -34,8 +34,12 @@ Add the following entry to your `mcp_settings.json`:
 - `get_routes`: Fetch registered HTTP routes.
 - `get_request_history`: Fetch recent HTTP request history with filters for method, status, path, duration, and errors.
 - `get_config`: Fetch sanitized runtime configuration from environment variables and ConfigService.
+- `get_errors`: Fetch recent runtime errors categorized by source (`bootstrap`, `runtime`, `unhandled`, `http-5xx`).
+
+`get_errors` captures runtime errors, uncaught exceptions, unhandled rejections, and HTTP 5xx responses with optional stack traces.
 
 `get_request_history` is useful for checking whether frontend traffic reached the server, finding slow endpoints, and inspecting recent 4xx/5xx responses. The plugin excludes internal `/_dev/mcp/*` traffic from the history.
+
 
 `get_config` is read-only. Values that look like secrets are always returned as `***MASKED***`.
 

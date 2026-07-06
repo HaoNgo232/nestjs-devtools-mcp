@@ -79,8 +79,6 @@ async function runE2ETests() {
     const appDir = path.resolve(__dirname, '../test-nestjs-app')
     const tsNodeBin = path.resolve(appDir, 'node_modules/.bin/ts-node')
     nestAppProcess = spawn(tsNodeBin, ['main.ts'], {
-
-
       cwd: appDir,
       env: {
         ...process.env,
@@ -110,7 +108,6 @@ async function runE2ETests() {
     await makeRequest('GET', '/errors/5xx').catch(() => {})
     await makeRequest('GET', '/errors/unhandled-rejection')
     await new Promise((resolve) => setTimeout(resolve, 200)) // Đợi async rejection được ghi vào buffer
-
 
     // 3. Khởi chạy MCP Server sử dụng npx trỏ tới build local
     console.log('Step 3: Spawning MCP Server Bridge using npx...')
@@ -311,12 +308,20 @@ async function runE2ETests() {
     const errorResult = JSON.parse(q6Response.result.content[0].text)
     console.log('Get Errors Result:', errorResult)
 
-    const hasRuntime = errorResult.entries.some((e: any) => e.source === 'runtime' && e.message.includes('Custom runtime error'))
-    const has5xx = errorResult.entries.some((e: any) => e.source === 'http-5xx' && e.message.includes('Database connection failed'))
-    const hasUnhandled = errorResult.entries.some((e: any) => e.source === 'unhandled' && e.message.includes('Async unhandled rejection'))
+    const hasRuntime = errorResult.entries.some(
+      (e: any) => e.source === 'runtime' && e.message.includes('Custom runtime error'),
+    )
+    const has5xx = errorResult.entries.some(
+      (e: any) => e.source === 'http-5xx' && e.message.includes('Database connection failed'),
+    )
+    const hasUnhandled = errorResult.entries.some(
+      (e: any) => e.source === 'unhandled' && e.message.includes('Async unhandled rejection'),
+    )
 
     if (!hasRuntime || !has5xx || !hasUnhandled) {
-      throw new Error(`QA-6 failed: Missing expected error entries. Runtime: ${hasRuntime}, 5xx: ${has5xx}, Unhandled: ${hasUnhandled}`)
+      throw new Error(
+        `QA-6 failed: Missing expected error entries. Runtime: ${hasRuntime}, 5xx: ${has5xx}, Unhandled: ${hasUnhandled}`,
+      )
     }
 
     // Lọc theo source: unhandled
@@ -349,4 +354,3 @@ async function runE2ETests() {
 }
 
 runE2ETests()
-
