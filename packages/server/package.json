@@ -1,6 +1,6 @@
 {
   "name": "nestjs-devtools-mcp",
-  "version": "0.3.6",
+  "version": "0.3.7",
   "description": "Bridge between AI client and NestJS application via MCP protocol",
   "author": "Hạo",
   "license": "MIT",
