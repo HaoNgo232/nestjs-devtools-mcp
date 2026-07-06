@@ -1,8 +1,6 @@
 {
   "name": "@nestjs-devtools-mcp/plugin",
-  "version": "0.3.1",
-
-
+  "version": "0.3.2",
   "description": "NestJS dynamic module for Model Context Protocol (MCP) integration",
   "author": "Hạo",
   "license": "MIT",
@@ -18,10 +16,10 @@
     "debugging",
     "observability",
     "runtime-logs",
-    "request-history"
+    "request-history",
+    "devtools"
   ],
   "main": "dist/index.js",
-
   "types": "dist/index.d.ts",
   "scripts": {
     "build": "tsc",

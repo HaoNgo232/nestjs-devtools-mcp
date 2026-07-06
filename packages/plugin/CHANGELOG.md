@@ -1,5 +1,11 @@
 # @nestjs-devtools-mcp/plugin
 
+## 0.3.2
+
+### Patch Changes
+
+- overhaul documentation and README structure for clarity and improved onboarding
+
 ## 0.3.1
 
 ### Patch Changes
