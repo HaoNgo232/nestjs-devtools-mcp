@@ -105,11 +105,22 @@ jobs:
             pnpm changeset version
           else
             echo "No changeset found. Auto-bumping patch version..."
-            pnpm --filter "./packages/*" exec npm version patch --no-git-tag-version
-            
-            # Sync root package.json version
-            NEW_VER=$(node -p "require('./packages/plugin/package.json').version")
-            node -e "const p = require('./package.json'); p.version = '$NEW_VER'; require('fs').writeFileSync('./package.json', JSON.stringify(p, null, 2) + '\n')"
+            node -e "
+              const fs = require('fs');
+              const files = ['./packages/plugin/package.json', './packages/server/package.json', './package.json'];
+              const pluginPkg = JSON.parse(fs.readFileSync(files[0], 'utf8'));
+              const parts = pluginPkg.version.split('.');
+              parts[2] = parseInt(parts[2], 10) + 1;
+              const newVer = parts.join('.');
+              files.forEach(file => {
+                if (fs.existsSync(file)) {
+                  const p = JSON.parse(fs.readFileSync(file, 'utf8'));
+                  p.version = newVer;
+                  fs.writeFileSync(file, JSON.stringify(p, null, 2) + '\n');
+                  console.log('Bumped ' + file + ' to ' + newVer);
+                }
+              });
+            "
           fi
 
           # Build freshly versioned packages
