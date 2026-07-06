@@ -5,7 +5,21 @@
   "description": "Bridge between AI client and NestJS application via MCP protocol",
   "author": "Hạo",
   "license": "MIT",
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "mcp-server",
+    "nestjs",
+    "nestjs-devtools",
+    "ai-agents",
+    "claude",
+    "cursor",
+    "copilot",
+    "bridge",
+    "cli"
+  ],
   "publishConfig": {
+
     "access": "public"
   },
   "main": "dist/index.js",

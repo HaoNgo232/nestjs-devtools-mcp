@@ -5,7 +5,22 @@
   "description": "NestJS dynamic module for Model Context Protocol (MCP) integration",
   "author": "Hạo",
   "license": "MIT",
+  "keywords": [
+    "nestjs",
+    "nestjs-plugin",
+    "nestjs-devtools",
+    "mcp",
+    "model-context-protocol",
+    "ai-agents",
+    "claude",
+    "cursor",
+    "debugging",
+    "observability",
+    "runtime-logs",
+    "request-history"
+  ],
   "main": "dist/index.js",
+
   "types": "dist/index.d.ts",
   "scripts": {
     "build": "tsc",
