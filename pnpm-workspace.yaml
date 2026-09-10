@@ -1,7 +1,0 @@
-packages:
-  - 'packages/*'
-  - 'demo-app'
-  - 'test-nestjs-app'
-allowBuilds:
-  '@nestjs/core': true
-  unrs-resolver: true

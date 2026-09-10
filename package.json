@@ -3,15 +3,14 @@
   "private": true,
   "description": "Monorepo for NestJS DevTools MCP",
   "scripts": {
-    "build": "pnpm -r build",
-    "test": "pnpm -r test",
+    "build": "bun run --filter '*' build",
+    "test": "bun run build && bun run --filter '*' test",
     "lint": "eslint \"**/*.ts\" --config eslint.config.mjs",
     "format": "prettier --write \"**/*.ts\"",
-    "ci": "pnpm run format && pnpm run lint && pnpm run build && pnpm run test"
+    "ci": "bun run format && bun run lint && bun run build && bun run test"
   },
   "workspaces": [
     "packages/*",
-    "demo-app",
     "test-nestjs-app"
   ],
   "devDependencies": {
@@ -27,12 +26,6 @@
     "prettier": "^3.8.1",
     "typescript": "^5.7.3",
     "typescript-eslint": "^8.26.0"
-  },
-  "pnpm": {
-    "onlyBuiltDependencies": [
-      "@nestjs/core",
-      "unrs-resolver"
-    ]
   },
   "version": "0.3.7"
 }

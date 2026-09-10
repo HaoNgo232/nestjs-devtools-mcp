@@ -1,9 +1,17 @@
-import { spawn, ChildProcess } from 'child_process'
+import { spawn, ChildProcess, execSync } from 'child_process'
 import * as path from 'path'
+import * as fs from 'fs'
 
 describe('E2E Zero-Code Runtime Preload', () => {
   let child: ChildProcess | null = null
   const TEST_PORT = 3098
+
+  beforeAll(() => {
+    const registerPath = path.resolve(__dirname, '../../dist/register.js')
+    if (!fs.existsSync(registerPath)) {
+      execSync('npm run build', { cwd: path.resolve(__dirname, '../..') })
+    }
+  })
 
   afterEach(async () => {
     if (child && !child.killed) {

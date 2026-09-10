@@ -20,25 +20,20 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
-        with:
-          version: 9
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 22
-          cache: 'pnpm'
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
 
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+        run: bun install --frozen-lockfile
+
+      - name: Build packages
+        run: bun run build
 
       - name: Run Lint
-        run: pnpm run lint
+        run: bun run lint
 
       - name: Run Tests
-        run: pnpm run test
+        run: bun run test
 
   build:
     name: Build Packages
@@ -48,22 +43,14 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
-        with:
-          version: 9
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 22
-          cache: 'pnpm'
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
 
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+        run: bun install --frozen-lockfile
 
       - name: Build packages
-        run: pnpm run build
+        run: bun run build
 
   publish:
     name: Version & Publish to NPM
@@ -79,20 +66,17 @@ jobs:
           fetch-depth: 0
           token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
-        with:
-          version: 9
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 22
-          cache: 'pnpm'
           registry-url: 'https://registry.npmjs.org'
 
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+        run: bun install --frozen-lockfile
 
       - name: Auto Version & Publish
         env:
@@ -107,7 +91,7 @@ jobs:
 
           if [ "$CHANGESET_COUNT" -gt 0 ]; then
             echo "Found $CHANGESET_COUNT changeset file(s). Consuming changesets..."
-            pnpm changeset version
+            bunx changeset version
           else
             echo "No changeset found. Auto-bumping patch version..."
             node -e "
@@ -129,10 +113,19 @@ jobs:
           fi
 
           # Build freshly versioned packages
-          pnpm run build
+          bun run build
+
+          # Setup npmrc token for bun publish
+          echo "//registry.npmjs.org/:_authToken=${NODE_AUTH_TOKEN}" > ~/.npmrc
 
           # Publish packages to NPM
-          pnpm --filter "./packages/*" publish --access public --no-git-checks
+          cd packages/plugin
+          bun publish --access public --tolerate-republish
+          cd ../..
+
+          cd packages/server
+          bun publish --access public --tolerate-republish
+          cd ../..
 
           # Commit updated package.json files back to main
           git add .
