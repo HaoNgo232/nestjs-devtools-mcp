@@ -42,12 +42,11 @@ const RUNTIME_GUIDE_URI = 'nestjs-devtools://runtime-guide'
 function buildRuntimeGuide() {
   return {
     project: 'nestjs-devtools-mcp',
-    purpose: 'Expose NestJS runtime state to AI tools via MCP with near-zero config.',
+    purpose: 'Expose NestJS runtime state to AI tools via MCP with zero code changes.',
     setup: {
-      plugin: {
-        package: '@nestjs-devtools-mcp/plugin',
-        moduleImport: 'DevtoolsMcpModule.register()',
-        loggerHook: 'auto-applied',
+      zeroCodeSetup: {
+        initCommand: 'npx nestjs-devtools-mcp init',
+        onDemandRun: 'npx nestjs-devtools-mcp run -- npm run start:dev',
       },
       mcpClient: {
         command: 'npx',
@@ -262,22 +261,16 @@ server.setRequestHandler(GetPromptRequestSchema, async (request) => {
         content: {
           type: 'text',
           text: [
-            'Install plugin in your NestJS project:',
-            'npm install @nestjs-devtools-mcp/plugin',
-            '',
-            'Register in app.module.ts:',
-            "import { DevtoolsMcpModule } from '@nestjs-devtools-mcp/plugin'",
-            'imports: [DevtoolsMcpModule.register()]',
-            '',
-            'Bootstrap with buffered logs in main.ts:',
-            'const app = await NestFactory.create(AppModule, { bufferLogs: true })',
-            '',
-            'The DevTools logger is automatically applied when DevtoolsMcpModule is registered.',
-            '',
-            'Configure MCP client:',
+            '1. Configure MCP client:',
             '{"command":"npx","args":["-y","nestjs-devtools-mcp@latest"]}',
             '',
-            'Then call tools discover_servers, get_logs, get_routes, get_request_history, and get_config.',
+            '2. In your NestJS project directory, run zero-code setup (no code changes needed):',
+            'npx nestjs-devtools-mcp init',
+            '',
+            '3. Start your NestJS app normally:',
+            'npm run start:dev',
+            '',
+            'Then call tools discover_servers, get_logs, get_routes, get_request_history, get_config, and get_errors.',
           ].join('\n'),
         },
       },

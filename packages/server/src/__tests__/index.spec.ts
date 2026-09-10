@@ -92,10 +92,10 @@ describe('MCP Bridge Entry Point (index.ts)', () => {
 
       expect(result.messages).toHaveLength(1)
       expect(result.messages[0].content.type).toBe('text')
-      expect(result.messages[0].content.text).toContain('npm install @nestjs-devtools-mcp/plugin')
+      expect(result.messages[0].content.text).toContain('npx nestjs-devtools-mcp init')
     })
 
-    it('quickstart prompt does not recommend deprecated applyDevtoolsLogger', async () => {
+    it('quickstart prompt recommends zero-code setup without manual logger', async () => {
       const result = await getPromptHandler({
         params: {
           name: 'install_nestjs_devtools_mcp',
@@ -106,8 +106,8 @@ describe('MCP Bridge Entry Point (index.ts)', () => {
 
       expect(text).not.toContain('applyDevtoolsLogger(app)')
       expect(text).not.toContain('import { applyDevtoolsLogger')
-      expect(text).toContain('bufferLogs: true')
-      expect(text).toContain('automatically applied')
+      expect(text).toContain('npx nestjs-devtools-mcp init')
+      expect(text).toContain('npm run start:dev')
     })
 
     it('should throw error for unsupported prompt', async () => {
@@ -144,7 +144,7 @@ describe('MCP Bridge Entry Point (index.ts)', () => {
       expect(result.contents[0].text).toContain('get_config')
     })
 
-    it('runtime guide says logger is auto-applied', async () => {
+    it('runtime guide describes zero-code setup', async () => {
       const result = await readResourceHandler({
         params: {
           uri: 'nestjs-devtools://runtime-guide',
@@ -153,7 +153,7 @@ describe('MCP Bridge Entry Point (index.ts)', () => {
 
       const guide = JSON.parse(result.contents[0].text)
 
-      expect(guide.setup.plugin.loggerHook).toBe('auto-applied')
+      expect(guide.setup.zeroCodeSetup.initCommand).toBe('npx nestjs-devtools-mcp init')
     })
 
     it('should throw error for missing resource', async () => {
