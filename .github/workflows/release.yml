@@ -105,6 +105,9 @@ jobs:
                 if (fs.existsSync(file)) {
                   const p = JSON.parse(fs.readFileSync(file, 'utf8'));
                   p.version = newVer;
+                  if (file === './packages/server/package.json' && p.dependencies && p.dependencies['@nestjs-devtools-mcp/plugin']) {
+                    p.dependencies['@nestjs-devtools-mcp/plugin'] = newVer;
+                  }
                   fs.writeFileSync(file, JSON.stringify(p, null, 2) + '\n');
                   console.log('Bumped ' + file + ' to ' + newVer);
                 }
@@ -115,16 +118,16 @@ jobs:
           # Build freshly versioned packages
           bun run build
 
-          # Setup npmrc token for bun publish
+          # Setup npmrc token for publishing
           echo "//registry.npmjs.org/:_authToken=${NODE_AUTH_TOKEN}" > ~/.npmrc
 
           # Publish packages to NPM
           cd packages/plugin
-          bun publish --access public --tolerate-republish
+          npm publish --access public
           cd ../..
 
           cd packages/server
-          bun publish --access public --tolerate-republish
+          npm publish --access public
           cd ../..
 
           # Commit updated package.json files back to main
