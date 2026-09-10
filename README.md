@@ -1,112 +1,56 @@
-# NestJS DevTools MCP
+# nestjs-devtools-mcp
 
-[![npm version](https://img.shields.io/npm/v/@nestjs-devtools-mcp/plugin.svg?style=flat-square)](https://www.npmjs.com/package/@nestjs-devtools-mcp/plugin)
-[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg?style=flat-square)](./LICENSE)
-[![NestJS](https://img.shields.io/badge/NestJS-%23E0234E.svg?style=flat-square&logo=nestjs&logoColor=white)](https://nestjs.com/)
-[![MCP](https://img.shields.io/badge/MCP-Protocol-blue.svg?style=flat-square)](https://modelcontextprotocol.io/)
+> Zero-code **Model Context Protocol (MCP)** server for **NestJS**.  
+> Empower your AI coding assistants (**Cursor**, **Claude Desktop**, **Claude Code**, **Windsurf**, **Cline**) with live runtime logs, registered routes, request history, errors, and configuration.
 
-Give your AI coding agents real-time visibility into your NestJS application.
-
-**NestJS DevTools MCP** connects a running NestJS app to AI tools such as Claude, Cursor, Copilot, Cline, and Roo Code through the Model Context Protocol (MCP). Instead of copy-pasting logs, routes, request errors, or config values into chat, your AI assistant can inspect them directly from your local app.
+[![npm version](https://img.shields.io/npm/v/nestjs-devtools-mcp.svg)](https://www.npmjs.com/package/nestjs-devtools-mcp)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
 ---
 
-## What You Get
+## How It Works
 
-- Runtime logs from your NestJS app
-- Registered HTTP routes
-- Recent HTTP request history
-- Sanitized runtime config
-- Runtime error history
-- Local server discovery
-- Localhost-only access by default
-- Production-safe default behavior
+```
+   AI Client (Cursor / Claude)
+              │
+              │  MCP over STDIO
+              ▼
+     nestjs-devtools-mcp (Bridge)
+              │
+              │  HTTP over localhost
+              ▼
+  Running NestJS App (Zero-Code Preload)
+```
+
+No code modifications required in your NestJS codebase. Your AI assistant connects directly to your live development server via local runtime introspection.
 
 ---
 
-## Packages
+## Step-by-Step Setup
 
-This monorepo publishes 2 packages:
+Follow these 4 simple steps to connect your AI assistant to any NestJS project:
 
-| Package                                                                                    | Purpose                                 |
-| ------------------------------------------------------------------------------------------ | --------------------------------------- |
-| [`@nestjs-devtools-mcp/plugin`](https://www.npmjs.com/package/@nestjs-devtools-mcp/plugin) | NestJS module installed inside your app |
-| [`nestjs-devtools-mcp`](https://www.npmjs.com/package/nestjs-devtools-mcp)                 | MCP STDIO bridge used by AI clients     |
+### Step 1: Configure Your AI Client (Once per machine)
 
----
+Add the `nestjs-devtools` MCP server to your AI editor or client settings.
 
-## Quick Start
-
-#### Option A: Zero-Code Setup (Recommended — No Code Changes)
-
-Configure your project once with the 1-click setup command:
-
-```bash
-npx nestjs-devtools-mcp init
-```
-
-This appends `NODE_OPTIONS="--require nestjs-devtools-mcp/register"` to `.env.local` and ensures it is ignored in `.gitignore`. Then start your NestJS app normally:
-
-```bash
-npm run start:dev
-```
-
-Or run directly without any file changes:
-
-```bash
-npx nestjs-devtools-mcp run -- npm run start:dev
-```
-
----
-
-#### Option B: Manual Plugin Registration
-
-### 1. Install the NestJS Plugin
-
-```bash
-npm install @nestjs-devtools-mcp/plugin
-```
-
-Or with pnpm:
-
-```bash
-pnpm add @nestjs-devtools-mcp/plugin
-```
-
-### 2. Register the Module
-
-```ts
-import { Module } from '@nestjs/common'
-import { DevtoolsMcpModule } from '@nestjs-devtools-mcp/plugin'
-
-@Module({
-  imports: [DevtoolsMcpModule.register()],
-})
-export class AppModule {}
-```
-
-### 3. Use `bufferLogs` During Bootstrap
-
-```ts
-import { NestFactory } from '@nestjs/core'
-import { AppModule } from './app.module'
-
-async function bootstrap() {
-  const app = await NestFactory.create(AppModule, {
-    bufferLogs: true,
-  })
-
-  await app.listen(3000)
+#### For Cursor (`~/.cursor/mcp.json` or project `.cursor/mcp.json`)
+```json
+{
+  "mcpServers": {
+    "nestjs-devtools": {
+      "command": "npx",
+      "args": ["-y", "nestjs-devtools-mcp@latest"]
+    }
+  }
 }
-
-bootstrap()
 ```
 
-The DevTools logger is applied automatically when the module is registered.
-
-### 4. Configure Your MCP Client
-
-Add this MCP server to your AI client configuration:
+#### For Claude Desktop
+Add to your `claude_desktop_config.json`:
+- **macOS**: `~/Library/Application Support/Claude/claude_desktop_config.json`
+- **Windows**: `%APPDATA%\Claude\claude_desktop_config.json`
+- **Linux**: `~/.config/Claude/claude_desktop_config.json`
 
 ```json
 {
@@ -119,199 +63,100 @@ Add this MCP server to your AI client configuration:
 }
 ```
 
-Restart your AI client, then ask:
-
-```txt
-Discover my local NestJS servers and show recent errors.
+#### For Claude Code CLI
+```bash
+claude mcp add nestjs-devtools -- npx -y nestjs-devtools-mcp@latest
 ```
+
+---
+
+### Step 2: Enable MCP in Your NestJS Project
+
+Navigate into your existing NestJS project directory and run:
+
+```bash
+cd /path/to/your-nestjs-app
+npx nestjs-devtools-mcp init
+```
+
+**What this does:**
+- Appends `NODE_OPTIONS="--require nestjs-devtools-mcp/register"` to `.env.local`
+- Ensures `.env.local` is ignored in `.gitignore`
+- **Zero code changes:** You never modify `app.module.ts`, `main.ts`, or add third-party dependencies to `package.json`.
+
+*(Alternative: On-demand runner without any file changes)*
+```bash
+npx nestjs-devtools-mcp run -- npm run start:dev
+```
+
+---
+
+### Step 3: Start Your NestJS Application
+
+Start your dev server using your normal daily workflow:
+
+```bash
+npm run start:dev
+# or: pnpm start:dev / yarn start:dev
+```
+
+The preload hook automatically attaches in memory, captures runtime logs, and exposes secure localhost inspection endpoints.
+
+---
+
+### Step 4: Ask Your AI Assistant!
+
+Your AI assistant can now use the following tools in real time:
+
+- *"What routes are currently registered in my NestJS app?"*
+- *"Show me the recent runtime errors and unhandled exceptions."*
+- *"Why did the request to `/api/orders` fail with HTTP 500?"*
+- *"Inspect recent HTTP requests and find slow queries taking over 200ms."*
+- *"Check the current environment and configuration values."*
 
 ---
 
 ## Available MCP Tools
 
-| Tool                  | Description                                                                              |
-| --------------------- | ---------------------------------------------------------------------------------------- |
-| `discover_servers`    | Scan localhost for NestJS apps with the plugin enabled                                   |
-| `get_errors`          | Read runtime errors from bootstrap, logger, unhandled exceptions, and HTTP 5xx responses |
-| `get_logs`            | Read recent runtime logs                                                                 |
-| `get_routes`          | List registered HTTP routes                                                              |
-| `get_request_history` | Inspect recent HTTP requests, statuses, durations, and errors                            |
-| `get_config`          | Inspect sanitized runtime config from `process.env` and selected `ConfigService` keys    |
-
----
-
-## Example Prompts
-
-After setup, try asking your AI assistant:
-
-```txt
-Find my running NestJS app and show me the latest runtime logs.
-```
-
-```txt
-List all registered routes in my NestJS server.
-```
-
-```txt
-Show recent failed HTTP requests and explain likely causes.
-```
-
-```txt
-Check runtime config values related to DATABASE.
-```
-
-```txt
-Show unhandled errors from the last few minutes.
-```
-
----
-
-## Runtime Endpoint
-
-The plugin exposes a localhost-only internal endpoint inside your NestJS app:
-
-```txt
-GET  /_dev/mcp/health
-POST /_dev/mcp/tools/get_logs
-POST /_dev/mcp/tools/get_routes
-POST /_dev/mcp/tools/get_request_history
-POST /_dev/mcp/tools/get_config
-POST /_dev/mcp/tools/get_errors
-```
-
-The bridge connects to this endpoint through `localhost`.
-
----
-
-## Configuration
-
-### Plugin Options
-
-```ts
-DevtoolsMcpModule.register({
-  name: 'my-api',
-  logBufferSize: 500,
-  requestHistorySize: 100,
-  errorBufferSize: 100,
-})
-```
-
-| Option               | Default                           | Description                     |
-| -------------------- | --------------------------------- | ------------------------------- |
-| `name`               | Auto-detected from `package.json` | App name shown during discovery |
-| `disabled`           | `true` when `NODE_ENV=production` | Disable the plugin              |
-| `logBufferSize`      | `500`                             | Max runtime log entries         |
-| `requestHistorySize` | `100`                             | Max request history entries     |
-| `errorBufferSize`    | `100`                             | Max runtime error entries       |
-
-### Bridge Environment Variables
-
-| Variable                 | Default | Description                                                   |
-| ------------------------ | ------- | ------------------------------------------------------------- |
-| `NESTJS_MCP_SCAN_START`  | `3000`  | First port to scan                                            |
-| `NESTJS_MCP_SCAN_END`    | `3010`  | Last port to scan                                             |
-| `NESTJS_MCP_PREFIX`      | empty   | Prefix used when probing the health endpoint                  |
-| `NESTJS_MCP_CONFIG_KEYS` | empty   | Comma-separated `ConfigService` keys allowed for `get_config` |
-
-Example:
-
-```bash
-NESTJS_MCP_SCAN_START=3000 NESTJS_MCP_SCAN_END=4000 npx nestjs-devtools-mcp
-```
+| Tool | Description |
+| :--- | :--- |
+| `discover_servers` | Automatically scans localhost ports for running NestJS instances. |
+| `get_routes` | Lists all registered HTTP routes with methods, paths, controllers, and handler names. |
+| `get_logs` | Retrieves buffered application runtime logs with level (`error`, `warn`, `log`, `debug`) and request ID filtering. |
+| `get_errors` | Returns recent runtime errors, bootstrap crashes, unhandled rejections, and HTTP 5xx responses with stack traces. |
+| `get_request_history` | Inspects recent HTTP requests with duration, status code, method, and correlation ID. |
+| `get_config` | Dumps runtime configuration from `process.env` and `@nestjs/config` `ConfigService`. |
 
 ---
 
 ## Security Model
 
-This project is designed for local development and debugging.
+Built with security best practices for local development:
 
-Security defaults:
-
-- Plugin is disabled when `NODE_ENV=production`
-- MCP endpoint is protected by a localhost-only guard
-- Request and response bodies are not captured by default
-- Internal `/_dev/mcp/*` calls are excluded from request history
-- Sensitive config values are always masked
-- ConfigService values are only read from explicitly declared keys
-
-Sensitive keys and values such as passwords, tokens, auth headers, database URLs, private keys, cookies, sessions, JWTs, and credentials are returned as:
-
-```txt
-***MASKED***
-```
-
----
-
-## How It Works
-
-```txt
-AI Client
-  │
-  │ MCP over STDIO
-  ▼
-nestjs-devtools-mcp
-  │
-  │ HTTP over localhost
-  ▼
-@nestjs-devtools-mcp/plugin
-  │
-  ▼
-Running NestJS App
-```
-
-The architecture intentionally keeps responsibilities separate:
-
-- The plugin runs inside the NestJS app and collects runtime state.
-- The bridge runs as an MCP server over STDIO.
-- The bridge does not start an HTTP server.
-- The plugin does not depend on the MCP SDK.
+- **Localhost Guard**: All endpoints are protected by `LocalhostOnlyGuard` and only accessible from the local machine.
+- **Production Disabled**: The preload hook and devtools plugin automatically disable when `NODE_ENV=production`.
+- **Automatic Secret Masking**: Passwords, API tokens, JWTs, database URLs, authorization headers, private keys, cookies, and session secrets are automatically masked as `***MASKED***`.
 
 ---
 
 ## Development
 
-Install dependencies:
-
 ```bash
+# Install dependencies
 pnpm install
-```
 
-Build all packages:
-
-```bash
+# Build all packages
 pnpm build
-```
 
-Run tests:
-
-```bash
+# Run test suite
 pnpm test
-```
 
-Run lint:
-
-```bash
-pnpm lint
-```
-
-Run the full local CI check:
-
-```bash
+# Run full CI check (format, lint, build, test)
 pnpm ci
 ```
 
 ---
 
-## Documentation
-
-- [Development Guide](./docs/development.md)
-- [Plugin Package](./packages/plugin/README.md)
-- [Bridge Package](./packages/server/README.md)
-
----
-
 ## License
 
-MIT © HaoNgo232
-
-For production environments, always reassess security assumptions before enabling runtime introspection tools.
+[MIT](LICENSE) © HaoNgo232
