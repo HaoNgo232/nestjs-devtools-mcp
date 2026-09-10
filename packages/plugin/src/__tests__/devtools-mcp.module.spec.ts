@@ -71,17 +71,19 @@ describe('DevtoolsMcpModule (Integration)', () => {
       expect(collectors).toBeDefined()
     })
 
-    it('should include all 5 enabled collectors in the collectors array', () => {
+    it('should include all 7 enabled collectors in the collectors array', () => {
       const controller = module.get<DevtoolsMcpController>(DevtoolsMcpController)
       const collectors = (controller as any).collectors
       expect(Array.isArray(collectors)).toBe(true)
-      expect(collectors.length).toBe(5)
+      expect(collectors.length).toBe(7)
 
       const logCollector = (collectors as any[]).find((c) => c.toolName === 'get_logs')
       const routeCollector = (collectors as any[]).find((c) => c.toolName === 'get_routes')
       const requestHistoryCollector = (collectors as any[]).find((c) => c.toolName === 'get_request_history')
       const configCollector = (collectors as any[]).find((c) => c.toolName === 'get_config')
       const errorCollector = (collectors as any[]).find((c) => c.toolName === 'get_errors')
+      const clearBuffersCollector = (collectors as any[]).find((c) => c.toolName === 'clear_buffers')
+      const diagnoseHealthCollector = (collectors as any[]).find((c) => c.toolName === 'diagnose_health')
 
       expect(logCollector).toBeDefined()
       expect(logCollector.description).toBeTruthy()
@@ -93,6 +95,10 @@ describe('DevtoolsMcpModule (Integration)', () => {
       expect(configCollector.description).toBeTruthy()
       expect(errorCollector).toBeDefined()
       expect(errorCollector.description).toBeTruthy()
+      expect(clearBuffersCollector).toBeDefined()
+      expect(clearBuffersCollector.description).toBeTruthy()
+      expect(diagnoseHealthCollector).toBeDefined()
+      expect(diagnoseHealthCollector.description).toBeTruthy()
     })
 
     it('should expose get_errors in health endpoint tools list', () => {

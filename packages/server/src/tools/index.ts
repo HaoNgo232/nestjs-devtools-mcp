@@ -6,6 +6,8 @@ import { registerConfigTools } from './config.tool.js'
 import { registerLogsTools } from './logs.tool.js'
 import { registerHistoryTools } from './history.tool.js'
 import { registerErrorsTools } from './errors.tool.js'
+import { registerClearBuffersTool } from './clear-buffers.tool.js'
+import { registerDiagnoseHealthTool } from './diagnose-health.tool.js'
 
 export function registerAllTools(server: McpServer, devtoolsProxy: DevToolsProxy) {
   registerDiscoveryTools(server, devtoolsProxy)
@@ -14,4 +16,6 @@ export function registerAllTools(server: McpServer, devtoolsProxy: DevToolsProxy
   registerLogsTools(server, devtoolsProxy)
   registerHistoryTools(server, devtoolsProxy)
   registerErrorsTools(server, devtoolsProxy)
+  registerClearBuffersTool(server, devtoolsProxy)
+  registerDiagnoseHealthTool(server, devtoolsProxy)
 }

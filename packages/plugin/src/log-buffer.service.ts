@@ -57,6 +57,16 @@ export class LogBufferService {
   }
 
   /**
+   * Clear all log entries from the buffer
+   * @returns Number of cleared entries
+   */
+  clear(): number {
+    const count = this.buffer.length
+    this.buffer.length = 0
+    return count
+  }
+
+  /**
    * Returns metadata about the buffer status
    */
   getStats() {

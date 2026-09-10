@@ -30,8 +30,8 @@ async function runEvaluation() {
   const xmlPath = resolve(__dirname, 'evaluations.xml')
   const pairs = parseEvaluationsXml(xmlPath)
 
-  if (pairs.length !== 10) {
-    throw new Error(`Expected exactly 10 QA pairs, found ${pairs.length}`)
+  if (pairs.length !== 12) {
+    throw new Error(`Expected exactly 12 QA pairs, found ${pairs.length}`)
   }
 
   let passed = 0
@@ -54,6 +54,10 @@ async function runEvaluation() {
     // Ground-truth verification against live server registry
     if (qa.expectedAnswer === 'nestjs_discover_servers') {
       verified = registeredTools['nestjs_discover_servers'] !== undefined
+    } else if (qa.expectedAnswer === 'nestjs_diagnose_health') {
+      verified = registeredTools['nestjs_diagnose_health'] !== undefined
+    } else if (qa.expectedAnswer === 'nestjs_clear_buffers') {
+      verified = registeredTools['nestjs_clear_buffers'] !== undefined
     } else if (qa.expectedAnswer === 'install_nestjs_devtools_mcp') {
       verified = registeredPrompts[QUICKSTART_PROMPT_NAME] !== undefined
     } else if (qa.expectedAnswer === 'nestjs-devtools://runtime-guide') {

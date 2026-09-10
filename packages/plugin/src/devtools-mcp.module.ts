@@ -32,6 +32,8 @@ import { RouteCollector } from './collectors/route.collector'
 import { RequestHistoryCollector } from './collectors/request-history.collector'
 import { ConfigCollector } from './collectors/config.collector'
 import { ErrorCollector } from './collectors/error.collector'
+import { ClearBuffersCollector } from './collectors/clear-buffers.collector'
+import { DiagnoseHealthCollector } from './collectors/diagnose-health.collector'
 import { ErrorBufferService } from './error-buffer.service'
 import { UnhandledErrorListener } from './unhandled-error.listener'
 import { RequestContextService } from './request-context.service'
@@ -181,6 +183,8 @@ export class DevtoolsMcpModule implements NestModule, OnApplicationBootstrap, On
         RequestHistoryCollector,
         ConfigCollector,
         ErrorCollector,
+        ClearBuffersCollector,
+        DiagnoseHealthCollector,
         Reflector,
         /**
          * Register collectors using factory to ensure they are always provided as an array.
@@ -189,7 +193,15 @@ export class DevtoolsMcpModule implements NestModule, OnApplicationBootstrap, On
         {
           provide: DEVTOOLS_COLLECTORS,
           useFactory: (...collectors: DevtoolsCollector[]) => collectors,
-          inject: [LogCollector, RouteCollector, RequestHistoryCollector, ConfigCollector, ErrorCollector],
+          inject: [
+            LogCollector,
+            RouteCollector,
+            RequestHistoryCollector,
+            ConfigCollector,
+            ErrorCollector,
+            ClearBuffersCollector,
+            DiagnoseHealthCollector,
+          ],
         },
       ],
       controllers: [DevtoolsMcpController],

@@ -80,6 +80,16 @@ export class ErrorBufferService {
     return this.filter({ ...filters, limit: this.maxSize }).length
   }
 
+  /**
+   * Clear all error entries from the buffer
+   * @returns Number of cleared entries
+   */
+  clear(): number {
+    const count = this.buffer.length
+    this.buffer.length = 0
+    return count
+  }
+
   getStats() {
     return {
       total: this.buffer.length,

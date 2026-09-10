@@ -40,4 +40,12 @@
     <question>In paginated observability tools, what property in the response envelope indicates whether further records exist?</question>
     <answer>has_more</answer>
   </qa_pair>
+  <qa_pair>
+    <question>What is the tool name used for one-shot runtime health diagnostics aggregating traffic, routes, and correlated errors?</question>
+    <answer>nestjs_diagnose_health</answer>
+  </qa_pair>
+  <qa_pair>
+    <question>What is the tool name used to purge in-memory logs, request history, and error telemetry buffers?</question>
+    <answer>nestjs_clear_buffers</answer>
+  </qa_pair>
 </evaluation>

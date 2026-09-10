@@ -97,6 +97,16 @@ export class RequestHistoryBufferService {
     }
   }
 
+  /**
+   * Clear all entries from the request history buffer
+   * @returns Number of cleared entries
+   */
+  clear(): number {
+    const count = this.buffer.length
+    this.buffer.length = 0
+    return count
+  }
+
   private normalizeLimit(limit: number): number {
     if (!Number.isFinite(limit) || limit <= 0) {
       return 50

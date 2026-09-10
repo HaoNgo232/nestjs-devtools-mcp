@@ -1,3 +1,5 @@
 export * from './common.schema.js'
 export * from './routes.schema.js'
 export * from './config.schema.js'
+export * from './clear-buffers.schema.js'
+export * from './diagnose-health.schema.js'
