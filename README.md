@@ -29,25 +29,7 @@ The bridge communicates with the AI client via STDIO and queries the running Nes
 
 ### 1. Configure MCP Client
 
-Add the server to your MCP client configuration.
-
-#### Cursor (`~/.cursor/mcp.json` or project `.cursor/mcp.json`)
-```json
-{
-  "mcpServers": {
-    "nestjs-devtools": {
-      "command": "npx",
-      "args": ["-y", "nestjs-devtools-mcp@latest"]
-    }
-  }
-}
-```
-
-#### Claude Desktop
-Configuration file paths:
-- **macOS**: `~/Library/Application Support/Claude/claude_desktop_config.json`
-- **Windows**: `%APPDATA%\Claude\claude_desktop_config.json`
-- **Linux**: `~/.config/Claude/claude_desktop_config.json`
+Add the following configuration to your AI client (Cursor, Claude Desktop, Windsurf, Cline, etc.):
 
 ```json
 {
@@ -60,24 +42,31 @@ Configuration file paths:
 }
 ```
 
-#### Claude Code CLI
-```bash
-claude mcp add nestjs-devtools -- npx -y nestjs-devtools-mcp@latest
-```
+**Where to add this:**
+- **Cursor**: In `~/.cursor/mcp.json` (global) or `.cursor/mcp.json` (project-level)
+- **Claude Desktop**: In `claude_desktop_config.json`:
+  - macOS: `~/Library/Application Support/Claude/claude_desktop_config.json`
+  - Windows: `%APPDATA%\Claude\claude_desktop_config.json`
+  - Linux: `~/.config/Claude/claude_desktop_config.json`
+- **Claude Code CLI** (alternative to manual JSON editing):
+  ```bash
+  claude mcp add nestjs-devtools -- npx -y nestjs-devtools-mcp@latest
+  ```
 
 ---
 
-### 2. Enable in NestJS Project
+### 2. Enable in Your NestJS Project
 
-In the NestJS project root, run:
+Open a terminal, navigate (`cd`) into your NestJS project folder (the folder containing `package.json`), and run:
 
 ```bash
+cd /path/to/my-nestjs-app
 npx nestjs-devtools-mcp init
 ```
 
-This appends `NODE_OPTIONS="--require nestjs-devtools-mcp/register"` to `.env.local` and adds `.env.local` to `.gitignore`. No modifications to TypeScript source files are made.
+This appends `NODE_OPTIONS="--require nestjs-devtools-mcp/register"` to `.env.local` and adds `.env.local` to `.gitignore`. No TypeScript source files are modified.
 
-Alternatively, run without creating configuration files:
+Alternatively, run on demand without creating any configuration files:
 
 ```bash
 npx nestjs-devtools-mcp run -- npm run start:dev
@@ -87,24 +76,24 @@ npx nestjs-devtools-mcp run -- npm run start:dev
 
 ### 3. Start the Application
 
-Start the development server:
+In your NestJS project folder, start the development server as usual:
 
 ```bash
 npm run start:dev
 ```
 
-The preload hook attaches during startup, enables log buffering, and exposes local inspection endpoints.
+The preload hook attaches during startup, enables log buffering, and exposes local inspection endpoints on localhost.
 
 ---
 
-### 4. Query via MCP
+### 4. Query via AI Client
 
-The AI client can now query runtime state using the registered tools.
+Your AI client can now query runtime state using the available MCP tools.
 
 Example queries:
-- List registered routes and controllers.
+- List registered routes, HTTP methods, and controllers.
 - Retrieve recent runtime errors or unhandled rejections.
-- Inspect failed HTTP requests and durations.
+- Inspect failed HTTP requests, status codes, and latencies.
 - Check current environment variables and configuration.
 
 ---
