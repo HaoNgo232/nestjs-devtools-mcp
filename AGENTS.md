@@ -2,47 +2,49 @@
 
 ## Project Structure & Module Organization
 
-This is a pnpm monorepo with two published packages and local apps:
+This is a Bun workspace monorepo with two published packages and test applications:
 
-- `packages/plugin`: `@nestjs-devtools-mcp/plugin`, a NestJS module that runs inside the user app and exposes `/_dev/mcp`.
-- `packages/server`: `nestjs-devtools-mcp`, a lightweight MCP STDIO bridge that discovers and proxies to local plugin endpoints.
-- `demo-app`: local NestJS demo for manual integration checks.
-- `test-nestjs-app`: minimal fixture app for development.
-- `docs`: installation and development documentation.
+- `packages/plugin`: `@nestjs-devtools-mcp/plugin`, a NestJS module that runs inside the target app and exposes `/_dev/mcp`.
+- `packages/server`: `nestjs-devtools-mcp`, an MCP STDIO bridge built with `@modelcontextprotocol/sdk` (`McpServer`). Discovers and proxies requests to local plugin endpoints.
+- `test-nestjs-app`: minimal fixture app used for development and testing.
 
-Source files live in each package’s `src`. Unit tests live beside source under `src/__tests__` or collector-specific `__tests__` directories.
+Source files live in each package's `src/`. In `packages/server`, code is modularized into `src/tools/`, `src/schemas/`, `src/types.ts`, and `src/constants.ts`. Unit tests live beside source files under `src/__tests__/`.
 
 ## Build, Test, and Development Commands
 
-Use pnpm from the repository root:
+Use Bun from the repository root:
 
-- `pnpm install`: install workspace dependencies.
-- `pnpm run build`: build all workspace packages with TypeScript.
-- `pnpm run test`: run Jest tests in each package.
-- `pnpm run lint`: lint all TypeScript files using `eslint.config.mjs`.
-- `pnpm run format`: format TypeScript files with Prettier.
-- `pnpm run ci`: run format, lint, build, and tests.
-- `pnpm --filter @nestjs-devtools-mcp/plugin publish --access public`: publish the NestJS plugin package.
-- `pnpm --filter nestjs-devtools-mcp publish --access public`: publish the MCP bridge package.
+- `bun install`: install workspace dependencies.
+- `bun run build`: build all workspace packages with TypeScript.
+- `bun run test`: run Jest test suites across all packages.
+- `bun run lint`: lint all TypeScript files using `eslint.config.mjs`.
+- `bun run format`: format TypeScript files with Prettier.
+- `bun run ci`: execute format, lint, build, and test pipeline.
 
-Package-scoped examples: `pnpm --filter @nestjs-devtools-mcp/plugin test` and `pnpm --filter nestjs-devtools-mcp build`.
+Package-scoped commands:
+- `bun run --filter @nestjs-devtools-mcp/plugin test`
+- `bun run --filter nestjs-devtools-mcp test`
+- `bun run --filter nestjs-devtools-mcp build`
 
 ## Coding Style & Naming Conventions
 
-Write TypeScript and follow existing NestJS naming in `packages/plugin`: services end in `.service.ts`, controllers in `.controller.ts`, guards in `.guard.ts`, and specs in `.spec.ts`. Keep bridge files in `packages/server` framework-free.
+- Write idiomatic TypeScript with strict types.
+- Follow NestJS conventions in `packages/plugin`: services end in `.service.ts`, controllers in `.controller.ts`, guards in `.guard.ts`, and specs in `.spec.ts`.
+- In `packages/server`, use modern MCP SDK APIs (`McpServer`, `server.registerTool`, `server.registerResource`, `server.registerPrompt`). Define schemas with Zod and declare tool annotations (`readOnlyHint`, `idempotentHint`).
+- Prefix all standardized MCP tools with `nestjs_` (e.g. `nestjs_discover_servers`, `nestjs_get_logs`).
+- ESLint enforces: no unused variables unless prefixed with `_`, no explicit `any` outside tests, and no non-null assertions.
 
-ESLint forbids unused variables unless prefixed with `_`, forbids explicit `any` outside tests, and forbids non-null assertions. Prettier is the formatting source of truth.
+## Architecture & Boundaries
 
-## Testing Guidelines
-
-Tests use Jest with `ts-jest` and match `*.spec.ts`. Keep tests close to the behavior being changed. Add or update tests for new tools, contracts, discovery behavior, guards, collectors, and logger changes. Run `pnpm run test` before opening a PR; use package-scoped test commands while iterating.
-
-## Architecture & Security Rules
-
-Preserve the package boundary: the plugin may import NestJS, but must not import the MCP SDK; the server may import the MCP SDK, but must never import `@nestjs/*`. The server must not start an HTTP server.
-
-The plugin should be transparent and production-safe: forward logs to the original logger, avoid changing app behavior, disable by default in production, and keep `/_dev/mcp` localhost-only. Keep user setup near-zero config; prefer auto-discovery and defaults over new required options.
+- Maintain strict package boundaries:
+  - `packages/plugin` may import `@nestjs/*`, but must NEVER import the MCP SDK.
+  - `packages/server` may import `@modelcontextprotocol/sdk`, but must NEVER import `@nestjs/*`.
+  - The server connects exclusively via STDIO and must not start an HTTP listener.
+- The plugin must be transparent and safe: forward logs to the original logger, disable by default in production (`NODE_ENV=production`), and restrict `/_dev/mcp` to localhost only.
+- Keep user setup zero-code: prioritize auto-discovery and sensible defaults over required configuration options.
 
 ## Commit & Pull Request Guidelines
 
-Recent history uses concise Conventional Commit-style prefixes such as `feat:`, `fix:`, and `chore:`. Keep commits focused. PRs should describe the behavior change, list tests run, note security or config impact, and link related issues when applicable.
+- Use Conventional Commit prefixes: `feat:`, `fix:`, `refactor:`, `test:`, `docs:`, `chore:`.
+- Keep commits atomic and focused on single behavioral slices.
+- Verify that `bun run test` passes cleanly before submitting changes.

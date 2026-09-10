@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<evaluation>
+  <qa_pair>
+    <question>What HTTP method does the /products route in ProductsController support for removing items?</question>
+    <answer>DELETE</answer>
+  </qa_pair>
+  <qa_pair>
+    <question>What is the handler method name registered for the GET /hello route in HelloController?</question>
+    <answer>getHello</answer>
+  </qa_pair>
+  <qa_pair>
+    <question>How many distinct HTTP route endpoints are registered under the ProductsController?</question>
+    <answer>3</answer>
+  </qa_pair>
+  <qa_pair>
+    <question>What controller handles the subpath '5xx' under the /errors route?</question>
+    <answer>ErrorsController</answer>
+  </qa_pair>
+  <qa_pair>
+    <question>What is the default health check path exposed by the NestJS DevTools MCP plugin on localhost?</question>
+    <answer>/_dev/mcp/health</answer>
+  </qa_pair>
+  <qa_pair>
+    <question>Which error source classification is assigned when an uncaught rejection occurs outside standard request handling?</question>
+    <answer>unhandled</answer>
+  </qa_pair>
+  <qa_pair>
+    <question>What is the name of the prompt exposed by the server for guided zero-code installation?</question>
+    <answer>install_nestjs_devtools_mcp</answer>
+  </qa_pair>
+  <qa_pair>
+    <question>What URI identifies the machine-readable runtime usage guide resource in the MCP server?</question>
+    <answer>nestjs-devtools://runtime-guide</answer>
+  </qa_pair>
+  <qa_pair>
+    <question>What is the standardized tool name used to scan localhost for active NestJS DevTools instances?</question>
+    <answer>nestjs_discover_servers</answer>
+  </qa_pair>
+  <qa_pair>
+    <question>In paginated observability tools, what property in the response envelope indicates whether further records exist?</question>
+    <answer>has_more</answer>
+  </qa_pair>
+</evaluation>

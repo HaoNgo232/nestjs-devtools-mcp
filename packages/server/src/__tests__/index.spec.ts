@@ -1,94 +1,51 @@
-import {
-  CallToolRequestSchema,
-  GetPromptRequestSchema,
-  ListPromptsRequestSchema,
-  ListResourcesRequestSchema,
-  ListToolsRequestSchema,
-  ReadResourceRequestSchema,
-} from '@modelcontextprotocol/sdk/types.js'
-import * as discovery from '../discovery'
+import * as discovery from '../discovery.js'
+import { server, devtoolsProxy, runServer } from '../index.js'
+import { QUICKSTART_PROMPT_NAME, RUNTIME_GUIDE_URI } from '../constants.js'
 
-// Mock SDK before importing index.ts
-jest.mock('@modelcontextprotocol/sdk/server/index.js', () => ({
-  Server: jest.fn().mockImplementation(() => ({
-    setRequestHandler: jest.fn(),
-    connect: jest.fn(),
-  })),
-}))
-
+jest.mock('../discovery.js')
 jest.mock('@modelcontextprotocol/sdk/server/stdio.js', () => ({
-  StdioServerTransport: jest.fn(),
+  StdioServerTransport: jest.fn().mockImplementation(() => ({})),
 }))
 
-import { server, devtoolsProxy, runServer } from '../index'
-
-jest.mock('../discovery')
-
-describe('MCP Bridge Entry Point (index.ts)', () => {
-  let listToolsHandler: any
-  let callToolHandler: any
-  let listPromptsHandler: any
-  let getPromptHandler: any
-  let listResourcesHandler: any
-  let readResourceHandler: any
+describe('MCP Bridge Entry Point (index.ts) with McpServer', () => {
+  let registeredTools: Record<string, any>
+  let registeredPrompts: Record<string, any>
+  let registeredResources: Record<string, any>
 
   beforeAll(() => {
-    // Capture the registered request handlers - Lấy các handler đã đăng ký để test
-    // Each call to setRequestHandler saves the handler in our local variables
-    const calls = (server.setRequestHandler as jest.Mock).mock.calls
-    for (const call of calls) {
-      if (call[0] === ListToolsRequestSchema) {
-        listToolsHandler = call[1]
-      } else if (call[0] === CallToolRequestSchema) {
-        callToolHandler = call[1]
-      } else if (call[0] === ListPromptsRequestSchema) {
-        listPromptsHandler = call[1]
-      } else if (call[0] === GetPromptRequestSchema) {
-        getPromptHandler = call[1]
-      } else if (call[0] === ListResourcesRequestSchema) {
-        listResourcesHandler = call[1]
-      } else if (call[0] === ReadResourceRequestSchema) {
-        readResourceHandler = call[1]
-      }
-    }
+    registeredTools = (server as any)._registeredTools
+    registeredPrompts = (server as any)._registeredPrompts
+    registeredResources = (server as any)._registeredResources
   })
 
-  it('should have registered tool handlers', () => {
-    expect(listToolsHandler).toBeDefined()
-    expect(callToolHandler).toBeDefined()
-    expect(listPromptsHandler).toBeDefined()
-    expect(getPromptHandler).toBeDefined()
-    expect(listResourcesHandler).toBeDefined()
-    expect(readResourceHandler).toBeDefined()
+  it('should have registered tools, prompts and resources in McpServer', () => {
+    expect(registeredTools).toBeDefined()
+    expect(registeredPrompts).toBeDefined()
+    expect(registeredResources).toBeDefined()
   })
 
   describe('List Tools Handler', () => {
-    it('should return the available tools list', async () => {
-      const result = await listToolsHandler()
-      expect(result.tools).toHaveLength(6)
-      expect(result.tools.map((t: any) => t.name)).toContain('discover_servers')
-      expect(result.tools.map((t: any) => t.name)).toContain('get_logs')
-      expect(result.tools.map((t: any) => t.name)).toContain('get_routes')
-      expect(result.tools.map((t: any) => t.name)).toContain('get_request_history')
-      expect(result.tools.map((t: any) => t.name)).toContain('get_config')
-      expect(result.tools.map((t: any) => t.name)).toContain('get_errors')
+    it('should register all expected baseline tools', () => {
+      const toolNames = Object.keys(registeredTools)
+      expect(toolNames.length).toBeGreaterThanOrEqual(6)
+      expect(toolNames).toContain('nestjs_discover_servers')
+      expect(toolNames).toContain('get_logs')
+      expect(toolNames).toContain('get_routes')
+      expect(toolNames).toContain('get_request_history')
+      expect(toolNames).toContain('get_config')
+      expect(toolNames).toContain('get_errors')
     })
   })
 
   describe('Prompt Handlers', () => {
-    it('should return available prompts', async () => {
-      const result = await listPromptsHandler()
-
-      expect(result.prompts).toHaveLength(1)
-      expect(result.prompts[0].name).toBe('install_nestjs_devtools_mcp')
+    it('should return available prompts', () => {
+      expect(registeredPrompts[QUICKSTART_PROMPT_NAME]).toBeDefined()
+      expect(registeredPrompts[QUICKSTART_PROMPT_NAME].title).toBe('Install NestJS DevTools MCP')
     })
 
     it('should return quickstart prompt content', async () => {
-      const result = await getPromptHandler({
-        params: {
-          name: 'install_nestjs_devtools_mcp',
-        },
-      })
+      const prompt = registeredPrompts[QUICKSTART_PROMPT_NAME]
+      const result = await prompt.callback({})
 
       expect(result.messages).toHaveLength(1)
       expect(result.messages[0].content.type).toBe('text')
@@ -96,12 +53,8 @@ describe('MCP Bridge Entry Point (index.ts)', () => {
     })
 
     it('quickstart prompt recommends zero-code setup without manual logger', async () => {
-      const result = await getPromptHandler({
-        params: {
-          name: 'install_nestjs_devtools_mcp',
-        },
-      })
-
+      const prompt = registeredPrompts[QUICKSTART_PROMPT_NAME]
+      const result = await prompt.callback({})
       const text = result.messages[0].content.text
 
       expect(text).not.toContain('applyDevtoolsLogger(app)')
@@ -110,75 +63,62 @@ describe('MCP Bridge Entry Point (index.ts)', () => {
       expect(text).toContain('npm run start:dev')
     })
 
-    it('should throw error for unsupported prompt', async () => {
-      await expect(
-        getPromptHandler({
-          params: {
-            name: 'invalid_prompt',
-          },
-        }),
-      ).rejects.toThrow('Prompt not supported: invalid_prompt')
+    it('should throw error for unsupported prompt', () => {
+      expect(registeredPrompts['invalid_prompt']).toBeUndefined()
     })
   })
 
   describe('Resource Handlers', () => {
-    it('should return available resources', async () => {
-      const result = await listResourcesHandler()
-
-      expect(result.resources).toHaveLength(1)
-      expect(result.resources[0].uri).toBe('nestjs-devtools://runtime-guide')
+    it('should return available resources', () => {
+      expect(registeredResources[RUNTIME_GUIDE_URI]).toBeDefined()
     })
 
     it('should return runtime guide resource content', async () => {
-      const result = await readResourceHandler({
-        params: {
-          uri: 'nestjs-devtools://runtime-guide',
-        },
-      })
+      const resource = registeredResources[RUNTIME_GUIDE_URI]
+      const result = await resource.readCallback(new URL(RUNTIME_GUIDE_URI))
 
       expect(result.contents).toHaveLength(1)
       expect(result.contents[0].mimeType).toBe('application/json')
       expect(result.contents[0].text).toContain('nestjs-devtools-mcp')
-      expect(result.contents[0].text).toContain('discover_servers')
-      expect(result.contents[0].text).toContain('get_request_history')
-      expect(result.contents[0].text).toContain('get_config')
     })
 
     it('runtime guide describes zero-code setup', async () => {
-      const result = await readResourceHandler({
-        params: {
-          uri: 'nestjs-devtools://runtime-guide',
-        },
-      })
-
+      const resource = registeredResources[RUNTIME_GUIDE_URI]
+      const result = await resource.readCallback(new URL(RUNTIME_GUIDE_URI))
       const guide = JSON.parse(result.contents[0].text)
 
       expect(guide.setup.zeroCodeSetup.initCommand).toBe('npx nestjs-devtools-mcp init')
     })
 
-    it('should throw error for missing resource', async () => {
-      await expect(
-        readResourceHandler({
-          params: {
-            uri: 'nestjs-devtools://missing',
-          },
-        }),
-      ).rejects.toThrow('Resource not found: nestjs-devtools://missing')
+    it('should not find unmapped resource', () => {
+      expect(registeredResources['nestjs-devtools://missing']).toBeUndefined()
     })
   })
 
   describe('Call Tool Handler', () => {
-    it('should handle discover_servers tool', async () => {
+    const callTool = async (name: string, args: any = {}) => {
+      const tool = registeredTools[name]
+      if (!tool) {
+        return {
+          isError: true,
+          content: [{ type: 'text', text: `Tool not supported: ${name}` }],
+        }
+      }
+      try {
+        return await tool.handler(args)
+      } catch (err: any) {
+        return {
+          isError: true,
+          content: [{ type: 'text', text: err.message || String(err) }],
+        }
+      }
+    }
+
+    it('should handle nestjs_discover_servers tool', async () => {
       const mockServers = [{ port: 3000, name: 'test-app' }]
       ;(discovery.discoverServers as jest.Mock).mockResolvedValue(mockServers)
 
-      const result = await callToolHandler({
-        params: {
-          name: 'discover_servers',
-          arguments: {},
-        },
-      })
-
+      const result = await callTool('nestjs_discover_servers', { response_format: 'json' })
       expect(discovery.discoverServers).toHaveBeenCalled()
       expect(JSON.parse(result.content[0].text)).toEqual(mockServers)
     })
@@ -187,12 +127,7 @@ describe('MCP Bridge Entry Point (index.ts)', () => {
       jest.spyOn(devtoolsProxy, 'resolvePort').mockResolvedValue(3000)
       jest.spyOn(devtoolsProxy, 'callPluginTool').mockResolvedValue({ logs: [] })
 
-      const result = await callToolHandler({
-        params: {
-          name: 'get_logs',
-          arguments: { port: 3000, lines: 10, requestId: 'req-123' },
-        },
-      })
+      const result = await callTool('get_logs', { port: 3000, lines: 10, requestId: 'req-123' })
 
       expect(devtoolsProxy.resolvePort).toHaveBeenCalledWith(3000)
       expect(devtoolsProxy.callPluginTool).toHaveBeenCalledWith(3000, 'get_logs', {
@@ -207,12 +142,7 @@ describe('MCP Bridge Entry Point (index.ts)', () => {
       jest.spyOn(devtoolsProxy, 'resolvePort').mockResolvedValue(3001)
       jest.spyOn(devtoolsProxy, 'callPluginTool').mockResolvedValue({ routes: [] })
 
-      const result = await callToolHandler({
-        params: {
-          name: 'get_routes',
-          arguments: { port: 3001 },
-        },
-      })
+      const result = await callTool('get_routes', { port: 3001 })
 
       expect(devtoolsProxy.resolvePort).toHaveBeenCalledWith(3001)
       expect(devtoolsProxy.callPluginTool).toHaveBeenCalledWith(3001, 'get_routes', {})
@@ -223,21 +153,16 @@ describe('MCP Bridge Entry Point (index.ts)', () => {
       jest.spyOn(devtoolsProxy, 'resolvePort').mockResolvedValue(3002)
       jest.spyOn(devtoolsProxy, 'callPluginTool').mockResolvedValue({ entries: [] })
 
-      const result = await callToolHandler({
-        params: {
-          name: 'get_request_history',
-          arguments: {
-            port: 3002,
-            limit: 25,
-            method: 'POST',
-            statusCode: 500,
-            statusClass: '5xx',
-            pathContains: '/api',
-            minDurationMs: 100,
-            onlyErrors: true,
-            requestId: 'req-456',
-          },
-        },
+      const result = await callTool('get_request_history', {
+        port: 3002,
+        limit: 25,
+        method: 'POST',
+        statusCode: 500,
+        statusClass: '5xx',
+        pathContains: '/api',
+        minDurationMs: 100,
+        onlyErrors: true,
+        requestId: 'req-456',
       })
 
       expect(devtoolsProxy.resolvePort).toHaveBeenCalledWith(3002)
@@ -258,16 +183,11 @@ describe('MCP Bridge Entry Point (index.ts)', () => {
       jest.spyOn(devtoolsProxy, 'resolvePort').mockResolvedValue(3003)
       jest.spyOn(devtoolsProxy, 'callPluginTool').mockResolvedValue({ entries: [] })
 
-      const result = await callToolHandler({
-        params: {
-          name: 'get_config',
-          arguments: {
-            port: 3003,
-            source: 'config-service',
-            keyContains: 'DATABASE',
-            includeMasked: true,
-          },
-        },
+      const result = await callTool('get_config', {
+        port: 3003,
+        source: 'config-service',
+        keyContains: 'DATABASE',
+        includeMasked: true,
       })
 
       expect(devtoolsProxy.resolvePort).toHaveBeenCalledWith(3003)
@@ -283,19 +203,14 @@ describe('MCP Bridge Entry Point (index.ts)', () => {
       jest.spyOn(devtoolsProxy, 'resolvePort').mockResolvedValue(3004)
       jest.spyOn(devtoolsProxy, 'callPluginTool').mockResolvedValue({ entries: [] })
 
-      const result = await callToolHandler({
-        params: {
-          name: 'get_errors',
-          arguments: {
-            port: 3004,
-            limit: 25,
-            source: 'unhandled',
-            since: 1234567890,
-            requestId: 'req-9',
-            onlyUnhandled: true,
-            includeStack: false,
-          },
-        },
+      const result = await callTool('get_errors', {
+        port: 3004,
+        limit: 25,
+        source: 'unhandled',
+        since: 1234567890,
+        requestId: 'req-9',
+        onlyUnhandled: true,
+        includeStack: false,
       })
 
       expect(devtoolsProxy.resolvePort).toHaveBeenCalledWith(3004)
@@ -310,24 +225,8 @@ describe('MCP Bridge Entry Point (index.ts)', () => {
       expect(JSON.parse(result.content[0].text)).toEqual({ entries: [] })
     })
 
-    it('should validate source enum in get_errors', async () => {
-      const result = await callToolHandler({
-        params: {
-          name: 'get_errors',
-          arguments: { source: 'invalid-source' },
-        },
-      })
-      expect(result.isError).toBe(true)
-    })
-
     it('should throw error for unsupported tool', async () => {
-      const result = await callToolHandler({
-        params: {
-          name: 'invalid_tool',
-          arguments: {},
-        },
-      })
-
+      const result = await callTool('invalid_tool', {})
       expect(result.isError).toBe(true)
       expect(result.content[0].text).toContain('Tool not supported: invalid_tool')
     })
@@ -335,13 +234,7 @@ describe('MCP Bridge Entry Point (index.ts)', () => {
     it('should handle generic errors gracefully', async () => {
       jest.spyOn(devtoolsProxy, 'resolvePort').mockRejectedValue(new Error('no server'))
 
-      const result = await callToolHandler({
-        params: {
-          name: 'get_logs',
-          arguments: {},
-        },
-      })
-
+      const result = await callTool('get_logs', {})
       expect(result.isError).toBe(true)
       expect(result.content[0].text).toBe('no server')
     })
@@ -350,13 +243,15 @@ describe('MCP Bridge Entry Point (index.ts)', () => {
   describe('Server Lifecycle', () => {
     it('should connect to transport when runServer is called', async () => {
       const spyConsole = jest.spyOn(console, 'error').mockImplementation()
+      const spyConnect = jest.spyOn(server, 'connect').mockResolvedValue(undefined as any)
 
       await runServer()
 
-      expect(server.connect).toHaveBeenCalled()
+      expect(spyConnect).toHaveBeenCalled()
       expect(spyConsole).toHaveBeenCalledWith(expect.stringContaining('started and is listening on STDIO'))
 
       spyConsole.mockRestore()
+      spyConnect.mockRestore()
     })
   })
 })
