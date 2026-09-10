@@ -3,5 +3,5 @@ packages:
   - 'demo-app'
   - 'test-nestjs-app'
 allowBuilds:
-  '@nestjs/core': set this to true or false
-  unrs-resolver: set this to true or false
+  '@nestjs/core': true
+  unrs-resolver: true

@@ -12,6 +12,7 @@ import {
 import { z } from 'zod'
 import { discoverServers } from './discovery.js'
 import { DevToolsProxy } from './proxy.js'
+import { runInit, runWithHook } from './cli.js'
 
 import * as pkg from '../package.json'
 
@@ -463,10 +464,25 @@ const isMain =
   currentFile?.endsWith('nestjs-devtools-mcp')
 
 if (isMain) {
-  runServer().catch((err) => {
-    console.error('Critical error during NestJS DevTools bridge launch:', err)
-    process.exit(1)
-  })
+  const subcommand = process.argv[2]
+
+  if (subcommand === 'init') {
+    const result = runInit()
+    console.log(`\x1b[32m[NestJS DevTools MCP]\x1b[0m ${result.message}`)
+    if (result.modifiedFiles.length > 0) {
+      console.log(`Updated files: ${result.modifiedFiles.join(', ')}`)
+    }
+    process.exit(0)
+  }
+
+  if (subcommand === 'run') {
+    runWithHook(process.argv.slice(3))
+  } else {
+    runServer().catch((err) => {
+      console.error('Critical error during NestJS DevTools bridge launch:', err)
+      process.exit(1)
+    })
+  }
 }
 
-export { server, devtoolsProxy }
+export { server, devtoolsProxy, runInit, runWithHook }

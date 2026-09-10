@@ -38,13 +38,35 @@ Restart your MCP client after saving the configuration.
 
 ---
 
-## Required NestJS Setup
-
-Your NestJS app must install and register the plugin package:
-
-```bash
-npm install @nestjs-devtools-mcp/plugin
-```
+## Setup Options
+ 
+ ### Option A: Zero-Code Setup (Recommended)
+ 
+ You do not need to install `@nestjs-devtools-mcp/plugin` or change your NestJS source code.
+ 
+ Run in your project root:
+ 
+ ```bash
+ npx nestjs-devtools-mcp init
+ ```
+ 
+ This configures `NODE_OPTIONS="--require nestjs-devtools-mcp/register"` in your `.env.local`. Then start your app as usual (`npm run start:dev`).
+ 
+ Or run on-demand via the CLI runner:
+ 
+ ```bash
+ npx nestjs-devtools-mcp run -- npm run start:dev
+ ```
+ 
+ ---
+ 
+ ### Option B: Manual Plugin Installation
+ 
+ Your NestJS app can optionally install and register the plugin package explicitly:
+ 
+ ```bash
+ npm install @nestjs-devtools-mcp/plugin
+ ```
 
 ```ts
 import { Module } from '@nestjs/common'

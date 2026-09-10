@@ -25,15 +25,20 @@
   "bin": {
     "nestjs-devtools-mcp": "./dist/index.js"
   },
+  "exports": {
+    ".": "./dist/index.js",
+    "./register": "./dist/register.js"
+  },
   "files": [
     "dist"
   ],
   "scripts": {
-    "build": "tsc && chmod +x dist/index.js",
+    "build": "tsc && cp dist/register.js dist/register.cjs && chmod +x dist/index.js",
     "test": "jest"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.29.0",
+    "@nestjs-devtools-mcp/plugin": "workspace:*",
     "zod": "^4.3.6"
   },
   "devDependencies": {

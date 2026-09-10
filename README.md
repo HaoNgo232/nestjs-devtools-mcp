@@ -37,6 +37,30 @@ This monorepo publishes 2 packages:
 
 ## Quick Start
 
+#### Option A: Zero-Code Setup (Recommended — No Code Changes)
+
+Configure your project once with the 1-click setup command:
+
+```bash
+npx nestjs-devtools-mcp init
+```
+
+This appends `NODE_OPTIONS="--require nestjs-devtools-mcp/register"` to `.env.local` and ensures it is ignored in `.gitignore`. Then start your NestJS app normally:
+
+```bash
+npm run start:dev
+```
+
+Or run directly without any file changes:
+
+```bash
+npx nestjs-devtools-mcp run -- npm run start:dev
+```
+
+---
+
+#### Option B: Manual Plugin Registration
+
 ### 1. Install the NestJS Plugin
 
 ```bash

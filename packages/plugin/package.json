@@ -33,7 +33,7 @@
     "access": "public"
   },
   "peerDependencies": {
-    "@nestjs/common": "^11.1.17",
+    "@nestjs/common": "^10.0.0 || ^11.0.0",
     "@nestjs/core": "^10.0.0 || ^11.0.0",
     "rxjs": "^7.0.0"
   },
